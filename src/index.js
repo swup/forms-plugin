@@ -46,8 +46,9 @@ export default class FormPlugin extends Plugin {
         if (!event.metaKey) {
             const form = event.target;
             const formData = new FormData(form);
-            const actionAttribute = form.getAttribute('action');
-            const link = new Link(actionAttribute ? actionAttribute : window.location.href);
+            const actionAttribute = form.getAttribute('action') || window.location.href;
+            const methodAttribute = form.getAttribute('method') || 'GET';
+            const link = new Link(actionAttribute);
 
             // fomr
             swup.triggerEvent('submitForm', event);
@@ -58,14 +59,14 @@ export default class FormPlugin extends Plugin {
                 swup.scrollToElement = link.getHash();
             }
 
-            if (form.method.toLowerCase() != 'get') {
+            if (methodAttribute.toLowerCase() != 'get') {
                 // remove page from cache
                 swup.cache.remove(link.getAddress());
 
                 // send data
                 swup.loadPage({
                     url: link.getAddress(),
-                    method: form.method,
+                    method: methodAttribute,
                     data: formData
                 });
             } else {

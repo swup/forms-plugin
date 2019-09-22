@@ -219,8 +219,9 @@ var FormPlugin = function (_Plugin) {
             if (!event.metaKey) {
                 var form = event.target;
                 var formData = new FormData(form);
-                var actionAttribute = form.getAttribute('action');
-                var link = new _helpers.Link(actionAttribute ? actionAttribute : window.location.href);
+                var actionAttribute = form.getAttribute('action') || window.location.href;
+                var methodAttribute = form.getAttribute('method') || 'GET';
+                var link = new _helpers.Link(actionAttribute);
 
                 // fomr
                 swup.triggerEvent('submitForm', event);
@@ -231,14 +232,14 @@ var FormPlugin = function (_Plugin) {
                     swup.scrollToElement = link.getHash();
                 }
 
-                if (form.method.toLowerCase() != 'get') {
+                if (methodAttribute.toLowerCase() != 'get') {
                     // remove page from cache
                     swup.cache.remove(link.getAddress());
 
                     // send data
                     swup.loadPage({
                         url: link.getAddress(),
-                        method: form.method,
+                        method: methodAttribute,
                         data: formData
                     });
                 } else {
