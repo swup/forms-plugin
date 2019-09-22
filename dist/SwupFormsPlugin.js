@@ -219,7 +219,8 @@ var FormPlugin = function (_Plugin) {
             if (!event.metaKey) {
                 var form = event.target;
                 var formData = new FormData(form);
-                var link = new _helpers.Link(form.getAttribute('action'));
+                var actionAttribute = form.getAttribute('action');
+                var link = new _helpers.Link(actionAttribute ? actionAttribute : window.location.href);
 
                 // fomr
                 swup.triggerEvent('submitForm', event);

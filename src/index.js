@@ -46,7 +46,8 @@ export default class FormPlugin extends Plugin {
         if (!event.metaKey) {
             const form = event.target;
             const formData = new FormData(form);
-            const link = new Link(form.getAttribute('action'));
+            const actionAttribute = form.getAttribute('action');
+            const link = new Link(actionAttribute ? actionAttribute : window.location.href);
 
             // fomr
             swup.triggerEvent('submitForm', event);
