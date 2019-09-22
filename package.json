@@ -1,6 +1,6 @@
 {
   "name": "@swup/forms-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Swup forms plugin - adds support for forms.",
   "main": "lib/index.js",
   "scripts": {
