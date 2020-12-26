@@ -91,7 +91,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 1);
+/******/ 	return __webpack_require__(__webpack_require__.s = 0);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -101,37 +101,7 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 
 
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-var query = exports.query = function query(selector) {
-	var context = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : document;
-
-	if (typeof selector !== 'string') {
-		return selector;
-	}
-
-	return context.querySelector(selector);
-};
-
-var queryAll = exports.queryAll = function queryAll(selector) {
-	var context = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : document;
-
-	if (typeof selector !== 'string') {
-		return selector;
-	}
-
-	return Array.prototype.slice.call(context.querySelectorAll(selector));
-};
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _index = __webpack_require__(2);
+var _index = __webpack_require__(1);
 
 var _index2 = _interopRequireDefault(_index);
 
@@ -140,7 +110,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 module.exports = _index2.default; // this is here for webpack to expose SwupPlugin as window.SwupPlugin
 
 /***/ }),
-/* 2 */
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -154,17 +124,17 @@ var _extends = Object.assign || function (target) { for (var i = 1; i < argument
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _plugin = __webpack_require__(3);
+var _plugin = __webpack_require__(2);
 
 var _plugin2 = _interopRequireDefault(_plugin);
 
-var _delegate = __webpack_require__(4);
+var _delegate = __webpack_require__(3);
 
 var _delegate2 = _interopRequireDefault(_delegate);
 
-var _utils = __webpack_require__(0);
+var _utils = __webpack_require__(5);
 
-var _helpers = __webpack_require__(6);
+var _Link = __webpack_require__(6);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -221,7 +191,7 @@ var FormPlugin = function (_Plugin) {
                 var formData = new FormData(form);
                 var actionAttribute = form.getAttribute('action') || window.location.href;
                 var methodAttribute = form.getAttribute('method') || 'GET';
-                var link = new _helpers.Link(actionAttribute);
+                var link = new _Link.Link(actionAttribute);
 
                 // fomr
                 swup.triggerEvent('submitForm', event);
@@ -291,7 +261,7 @@ var FormPlugin = function (_Plugin) {
 exports.default = FormPlugin;
 
 /***/ }),
-/* 3 */
+/* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -335,10 +305,10 @@ var Plugin = function () {
 exports.default = Plugin;
 
 /***/ }),
-/* 4 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var closest = __webpack_require__(5);
+var closest = __webpack_require__(4);
 
 /**
  * Delegates event to a selector.
@@ -385,7 +355,7 @@ module.exports = delegate;
 
 
 /***/ }),
-/* 5 */
+/* 4 */
 /***/ (function(module, exports) {
 
 var DOCUMENT_NODE_TYPE = 9;
@@ -424,290 +394,37 @@ module.exports = closest;
 
 
 /***/ }),
+/* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+var query = exports.query = function query(selector) {
+	var context = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : document;
+
+	if (typeof selector !== 'string') {
+		return selector;
+	}
+
+	return context.querySelector(selector);
+};
+
+var queryAll = exports.queryAll = function queryAll(selector) {
+	var context = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : document;
+
+	if (typeof selector !== 'string') {
+		return selector;
+	}
+
+	return Array.prototype.slice.call(context.querySelectorAll(selector));
+};
+
+/***/ }),
 /* 6 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.Link = exports.markSwupElements = exports.getCurrentUrl = exports.transitionEnd = exports.fetch = exports.getDataFromHtml = exports.createHistoryRecord = exports.classify = undefined;
-
-var _classify = __webpack_require__(7);
-
-var _classify2 = _interopRequireDefault(_classify);
-
-var _createHistoryRecord = __webpack_require__(8);
-
-var _createHistoryRecord2 = _interopRequireDefault(_createHistoryRecord);
-
-var _getDataFromHtml = __webpack_require__(9);
-
-var _getDataFromHtml2 = _interopRequireDefault(_getDataFromHtml);
-
-var _fetch = __webpack_require__(10);
-
-var _fetch2 = _interopRequireDefault(_fetch);
-
-var _transitionEnd = __webpack_require__(11);
-
-var _transitionEnd2 = _interopRequireDefault(_transitionEnd);
-
-var _getCurrentUrl = __webpack_require__(12);
-
-var _getCurrentUrl2 = _interopRequireDefault(_getCurrentUrl);
-
-var _markSwupElements = __webpack_require__(13);
-
-var _markSwupElements2 = _interopRequireDefault(_markSwupElements);
-
-var _Link = __webpack_require__(14);
-
-var _Link2 = _interopRequireDefault(_Link);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var classify = exports.classify = _classify2.default;
-var createHistoryRecord = exports.createHistoryRecord = _createHistoryRecord2.default;
-var getDataFromHtml = exports.getDataFromHtml = _getDataFromHtml2.default;
-var fetch = exports.fetch = _fetch2.default;
-var transitionEnd = exports.transitionEnd = _transitionEnd2.default;
-var getCurrentUrl = exports.getCurrentUrl = _getCurrentUrl2.default;
-var markSwupElements = exports.markSwupElements = _markSwupElements2.default;
-var Link = exports.Link = _Link2.default;
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-var classify = function classify(text) {
-	var output = text.toString().toLowerCase().replace(/\s+/g, '-') // Replace spaces with -
-	.replace(/\//g, '-') // Replace / with -
-	.replace(/[^\w\-]+/g, '') // Remove all non-word chars
-	.replace(/\-\-+/g, '-') // Replace multiple - with single -
-	.replace(/^-+/, '') // Trim - from start of text
-	.replace(/-+$/, ''); // Trim - from end of text
-	if (output[0] === '/') output = output.splice(1);
-	if (output === '') output = 'homepage';
-	return output;
-};
-
-exports.default = classify;
-
-/***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-var createHistoryRecord = function createHistoryRecord(url) {
-	window.history.pushState({
-		url: url || window.location.href.split(window.location.hostname)[1],
-		random: Math.random(),
-		source: 'swup'
-	}, document.getElementsByTagName('title')[0].innerText, url || window.location.href.split(window.location.hostname)[1]);
-};
-
-exports.default = createHistoryRecord;
-
-/***/ }),
-/* 9 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
-var _utils = __webpack_require__(0);
-
-var getDataFromHtml = function getDataFromHtml(html, containers) {
-	var fakeDom = document.createElement('html');
-	fakeDom.innerHTML = html;
-	var blocks = [];
-
-	var _loop = function _loop(i) {
-		if (fakeDom.querySelector(containers[i]) == null) {
-			// page in invalid
-			return {
-				v: null
-			};
-		} else {
-			(0, _utils.queryAll)(containers[i]).forEach(function (item, index) {
-				(0, _utils.queryAll)(containers[i], fakeDom)[index].setAttribute('data-swup', blocks.length); // marks element with data-swup
-				blocks.push((0, _utils.queryAll)(containers[i], fakeDom)[index].outerHTML);
-			});
-		}
-	};
-
-	for (var i = 0; i < containers.length; i++) {
-		var _ret = _loop(i);
-
-		if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
-	}
-
-	var json = {
-		title: fakeDom.querySelector('title').innerText,
-		pageClass: fakeDom.querySelector('body').className,
-		originalContent: html,
-		blocks: blocks
-	};
-
-	// to prevent memory leaks
-	fakeDom.innerHTML = '';
-	fakeDom = null;
-
-	return json;
-};
-
-exports.default = getDataFromHtml;
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-var fetch = function fetch(setOptions) {
-	var callback = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-	var defaults = {
-		url: window.location.pathname + window.location.search,
-		method: 'GET',
-		data: null,
-		headers: {}
-	};
-
-	var options = _extends({}, defaults, setOptions);
-
-	var request = new XMLHttpRequest();
-
-	request.onreadystatechange = function () {
-		if (request.readyState === 4) {
-			if (request.status !== 500) {
-				callback(request);
-			} else {
-				callback(request);
-			}
-		}
-	};
-
-	request.open(options.method, options.url, true);
-	Object.keys(options.headers).forEach(function (key) {
-		request.setRequestHeader(key, options.headers[key]);
-	});
-	request.send(options.data);
-	return request;
-};
-
-exports.default = fetch;
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-var transitionEnd = function transitionEnd() {
-	var el = document.createElement('div');
-
-	var transEndEventNames = {
-		WebkitTransition: 'webkitTransitionEnd',
-		MozTransition: 'transitionend',
-		OTransition: 'oTransitionEnd otransitionend',
-		transition: 'transitionend'
-	};
-
-	for (var name in transEndEventNames) {
-		if (el.style[name] !== undefined) {
-			return transEndEventNames[name];
-		}
-	}
-
-	return false;
-};
-
-exports.default = transitionEnd;
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-var getCurrentUrl = function getCurrentUrl() {
-	return window.location.pathname + window.location.search;
-};
-
-exports.default = getCurrentUrl;
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-	value: true
-});
-
-var _utils = __webpack_require__(0);
-
-var markSwupElements = function markSwupElements(element, containers) {
-	var blocks = 0;
-
-	var _loop = function _loop(i) {
-		if (element.querySelector(containers[i]) == null) {
-			console.warn('Element ' + containers[i] + ' is not in current page.');
-		} else {
-			(0, _utils.queryAll)(containers[i]).forEach(function (item, index) {
-				(0, _utils.queryAll)(containers[i], element)[index].setAttribute('data-swup', blocks);
-				blocks++;
-			});
-		}
-	};
-
-	for (var i = 0; i < containers.length; i++) {
-		_loop(i);
-	}
-};
-
-exports.default = markSwupElements;
-
-/***/ }),
-/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
