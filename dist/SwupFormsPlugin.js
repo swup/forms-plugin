@@ -428,7 +428,7 @@ module.exports = closest;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Link = exports.markSwupElements = exports.getCurrentUrl = exports.transitionEnd = exports.fetch = exports.getDataFromHTML = exports.createHistoryRecord = exports.classify = undefined;
+exports.Link = exports.markSwupElements = exports.getCurrentUrl = exports.transitionEnd = exports.fetch = exports.getDataFromHtml = exports.createHistoryRecord = exports.classify = undefined;
 
 var _classify = __webpack_require__(7);
 
@@ -438,9 +438,9 @@ var _createHistoryRecord = __webpack_require__(8);
 
 var _createHistoryRecord2 = _interopRequireDefault(_createHistoryRecord);
 
-var _getDataFromHTML = __webpack_require__(9);
+var _getDataFromHtml = __webpack_require__(9);
 
-var _getDataFromHTML2 = _interopRequireDefault(_getDataFromHTML);
+var _getDataFromHtml2 = _interopRequireDefault(_getDataFromHtml);
 
 var _fetch = __webpack_require__(10);
 
@@ -466,7 +466,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 var classify = exports.classify = _classify2.default;
 var createHistoryRecord = exports.createHistoryRecord = _createHistoryRecord2.default;
-var getDataFromHTML = exports.getDataFromHTML = _getDataFromHTML2.default;
+var getDataFromHtml = exports.getDataFromHtml = _getDataFromHtml2.default;
 var fetch = exports.fetch = _fetch2.default;
 var transitionEnd = exports.transitionEnd = _transitionEnd2.default;
 var getCurrentUrl = exports.getCurrentUrl = _getCurrentUrl2.default;
@@ -532,10 +532,9 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
 var _utils = __webpack_require__(0);
 
-var getDataFromHTML = function getDataFromHTML(html, containers) {
-	var content = html.replace('<body', '<div id="swupBody"').replace('</body>', '</div>');
-	var fakeDom = document.createElement('div');
-	fakeDom.innerHTML = content;
+var getDataFromHtml = function getDataFromHtml(html, containers) {
+	var fakeDom = document.createElement('html');
+	fakeDom.innerHTML = html;
 	var blocks = [];
 
 	var _loop = function _loop(i) {
@@ -546,7 +545,7 @@ var getDataFromHTML = function getDataFromHTML(html, containers) {
 			};
 		} else {
 			(0, _utils.queryAll)(containers[i]).forEach(function (item, index) {
-				(0, _utils.queryAll)(containers[i], fakeDom)[index].dataset.swup = blocks.length; // marks element with data-swup
+				(0, _utils.queryAll)(containers[i], fakeDom)[index].setAttribute('data-swup', blocks.length); // marks element with data-swup
 				blocks.push((0, _utils.queryAll)(containers[i], fakeDom)[index].outerHTML);
 			});
 		}
@@ -560,7 +559,7 @@ var getDataFromHTML = function getDataFromHTML(html, containers) {
 
 	var json = {
 		title: fakeDom.querySelector('title').innerText,
-		pageClass: fakeDom.querySelector('#swupBody').className,
+		pageClass: fakeDom.querySelector('body').className,
 		originalContent: html,
 		blocks: blocks
 	};
@@ -572,7 +571,7 @@ var getDataFromHTML = function getDataFromHTML(html, containers) {
 	return json;
 };
 
-exports.default = getDataFromHTML;
+exports.default = getDataFromHtml;
 
 /***/ }),
 /* 10 */
@@ -689,7 +688,7 @@ var markSwupElements = function markSwupElements(element, containers) {
 			console.warn('Element ' + containers[i] + ' is not in current page.');
 		} else {
 			(0, _utils.queryAll)(containers[i]).forEach(function (item, index) {
-				(0, _utils.queryAll)(containers[i], element)[index].dataset.swup = blocks;
+				(0, _utils.queryAll)(containers[i], element)[index].setAttribute('data-swup', blocks);
 				blocks++;
 			});
 		}
