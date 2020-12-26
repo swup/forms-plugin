@@ -59,6 +59,11 @@ export default class FormPlugin extends Plugin {
                 swup.scrollToElement = link.getHash();
             }
 
+            // get custom transition from data
+            const customTransition = form.getAttribute(
+                'data-swup-transition'
+            );
+
             if (methodAttribute.toLowerCase() != 'get') {
                 // remove page from cache
                 swup.cache.remove(link.getAddress());
@@ -67,7 +72,8 @@ export default class FormPlugin extends Plugin {
                 swup.loadPage({
                     url: link.getAddress(),
                     method: methodAttribute,
-                    data: formData
+                    data: formData,
+                    customTransition,
                 });
             } else {
                 // create base url
@@ -106,7 +112,8 @@ export default class FormPlugin extends Plugin {
 
                 // send data
                 swup.loadPage({
-                    url: url
+                    url: url,
+                    customTransition,
                 });
             }
         } else {

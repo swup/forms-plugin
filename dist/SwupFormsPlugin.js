@@ -232,6 +232,9 @@ var FormPlugin = function (_Plugin) {
                     swup.scrollToElement = link.getHash();
                 }
 
+                // get custom transition from data
+                var customTransition = form.getAttribute('data-swup-transition');
+
                 if (methodAttribute.toLowerCase() != 'get') {
                     // remove page from cache
                     swup.cache.remove(link.getAddress());
@@ -240,7 +243,8 @@ var FormPlugin = function (_Plugin) {
                     swup.loadPage({
                         url: link.getAddress(),
                         method: methodAttribute,
-                        data: formData
+                        data: formData,
+                        customTransition: customTransition
                     });
                 } else {
                     // create base url
@@ -271,7 +275,8 @@ var FormPlugin = function (_Plugin) {
 
                     // send data
                     swup.loadPage({
-                        url: url
+                        url: url,
+                        customTransition: customTransition
                     });
                 }
             } else {
