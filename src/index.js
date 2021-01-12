@@ -1,7 +1,7 @@
 import Plugin from '@swup/plugin';
 import delegate from 'delegate';
 import { queryAll } from 'swup/lib/utils';
-import { Link } from 'swup/lib/helpers/Link';
+import Link from 'swup/lib/helpers/Link';
 
 export default class FormPlugin extends Plugin {
     name = "FormsPlugin";
