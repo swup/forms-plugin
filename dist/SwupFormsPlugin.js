@@ -136,6 +136,8 @@ var _utils = __webpack_require__(5);
 
 var _Link = __webpack_require__(6);
 
+var _Link2 = _interopRequireDefault(_Link);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -191,7 +193,7 @@ var FormPlugin = function (_Plugin) {
                 var formData = new FormData(form);
                 var actionAttribute = form.getAttribute('action') || window.location.href;
                 var methodAttribute = form.getAttribute('method') || 'GET';
-                var link = new _Link.Link(actionAttribute);
+                var link = new _Link2.default(actionAttribute);
 
                 // fomr
                 swup.triggerEvent('submitForm', event);
