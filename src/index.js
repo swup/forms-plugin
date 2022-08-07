@@ -49,8 +49,8 @@ export default class FormPlugin extends Plugin {
             const actionAttribute = form.getAttribute('action') || window.location.href;
             const methodAttribute = form.getAttribute('method') || 'GET';
             const link = new Link(actionAttribute);
+            const url = link.getAddress();
 
-            // fomr
             swup.triggerEvent('submitForm', event);
 
             event.preventDefault();
@@ -60,64 +60,44 @@ export default class FormPlugin extends Plugin {
             }
 
             // get custom transition from data
-            const customTransition = form.getAttribute(
-                'data-swup-transition'
-            );
+            const customTransition = form.getAttribute('data-swup-transition');
 
             if (methodAttribute.toLowerCase() != 'get') {
-                // remove page from cache
-                swup.cache.remove(link.getAddress());
-
-                // send data
-                swup.loadPage({
-                    url: link.getAddress(),
-                    method: methodAttribute,
-                    data: formData,
-                    customTransition,
-                });
-            } else {
-                // create base url
-                let url = link.getAddress() || window.location.href;
-                let inputs = queryAll('input, select', form);
-                if (url.indexOf('?') == -1) {
-                    url += '?';
-                } else {
-                    url += '&';
-                }
-
-                // add form data to url
-                inputs.forEach((input) => {
-                    if (input.type == 'checkbox' || input.type == 'radio') {
-                        if (input.checked) {
-                            url +=
-                                encodeURIComponent(input.name) +
-                                '=' +
-                                encodeURIComponent(input.value) +
-                                '&';
-                        }
-                    } else {
-                        url +=
-                            encodeURIComponent(input.name) +
-                            '=' +
-                            encodeURIComponent(input.value) +
-                            '&';
-                    }
-                });
-
-                // remove last "&"
-                url = url.slice(0, -1);
-
                 // remove page from cache
                 swup.cache.remove(url);
 
                 // send data
                 swup.loadPage({
-                    url: url,
+                    url,
+                    method: methodAttribute,
+                    data: formData,
+                    customTransition,
+                });
+            } else {
+                const urlWithQuery = this.appendFormDataAsQueryParameters(url, formData)
+
+                // remove page from cache
+                swup.cache.remove(urlWithQuery);
+
+                // send data
+                swup.loadPage({
+                    url: urlWithQuery,
                     customTransition,
                 });
             }
         } else {
             swup.triggerEvent('openFormSubmitInNewTab', event);
+        }
+    }
+
+    appendFormDataAsQueryParameters(url, formData) {
+        const query = new URLSearchParams(formData).toString()
+        if (query && url.indexOf('?') == -1) {
+            return url + '?' + query;
+        } else if (query) {
+            return url + '&' + query;
+        } else {
+            return url
         }
     }
 }
