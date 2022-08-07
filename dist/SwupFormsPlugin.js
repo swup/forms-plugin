@@ -194,8 +194,8 @@ var FormPlugin = function (_Plugin) {
                 var actionAttribute = form.getAttribute('action') || window.location.href;
                 var methodAttribute = form.getAttribute('method') || 'GET';
                 var link = new _Link2.default(actionAttribute);
+                var url = link.getAddress();
 
-                // fomr
                 swup.triggerEvent('submitForm', event);
 
                 event.preventDefault();
@@ -209,50 +209,41 @@ var FormPlugin = function (_Plugin) {
 
                 if (methodAttribute.toLowerCase() != 'get') {
                     // remove page from cache
-                    swup.cache.remove(link.getAddress());
-
-                    // send data
-                    swup.loadPage({
-                        url: link.getAddress(),
-                        method: methodAttribute,
-                        data: formData,
-                        customTransition: customTransition
-                    });
-                } else {
-                    // create base url
-                    var url = link.getAddress() || window.location.href;
-                    var inputs = (0, _utils.queryAll)('input, select', form);
-                    if (url.indexOf('?') == -1) {
-                        url += '?';
-                    } else {
-                        url += '&';
-                    }
-
-                    // add form data to url
-                    inputs.forEach(function (input) {
-                        if (input.type == 'checkbox' || input.type == 'radio') {
-                            if (input.checked) {
-                                url += encodeURIComponent(input.name) + '=' + encodeURIComponent(input.value) + '&';
-                            }
-                        } else {
-                            url += encodeURIComponent(input.name) + '=' + encodeURIComponent(input.value) + '&';
-                        }
-                    });
-
-                    // remove last "&"
-                    url = url.slice(0, -1);
-
-                    // remove page from cache
                     swup.cache.remove(url);
 
                     // send data
                     swup.loadPage({
                         url: url,
+                        method: methodAttribute,
+                        data: formData,
+                        customTransition: customTransition
+                    });
+                } else {
+                    var urlWithQuery = this.appendFormDataAsQueryParameters(url, formData);
+
+                    // remove page from cache
+                    swup.cache.remove(urlWithQuery);
+
+                    // send data
+                    swup.loadPage({
+                        url: urlWithQuery,
                         customTransition: customTransition
                     });
                 }
             } else {
                 swup.triggerEvent('openFormSubmitInNewTab', event);
+            }
+        }
+    }, {
+        key: 'appendFormDataAsQueryParameters',
+        value: function appendFormDataAsQueryParameters(url, formData) {
+            var query = new URLSearchParams(formData).toString();
+            if (query && url.indexOf('?') == -1) {
+                return url + '?' + query;
+            } else if (query) {
+                return url + '&' + query;
+            } else {
+                return url;
             }
         }
     }]);
