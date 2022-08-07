@@ -12,7 +12,10 @@ The response from the server must be a valid page with all elements that need to
 This method does not support submission of files, or other advanced features. 
 If you're looking for such features, please, use swup API to send requests. 
 
-## Instalation
+Form submissions are serialized using the [URLSearchParams](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams) browser API.
+If you need to support older browsers like IE 11, you should add a [polyfill](https://github.com/ungap/url-search-params).
+
+## Installation
 This plugin can be installed with npm
 
 ```bash
