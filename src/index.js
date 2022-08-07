@@ -36,6 +36,8 @@ export default class FormPlugin extends Plugin {
     }
 
     unmount() {
+        const swup = this.swup;
+
         swup.delegatedListeners.formSubmit.destroy();
     }
 
