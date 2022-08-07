@@ -180,6 +180,8 @@ var FormPlugin = function (_Plugin) {
     }, {
         key: 'unmount',
         value: function unmount() {
+            var swup = this.swup;
+
             swup.delegatedListeners.formSubmit.destroy();
         }
     }, {
