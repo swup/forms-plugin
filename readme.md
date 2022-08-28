@@ -61,7 +61,7 @@ new SwupFormsPlugin({
 });
 ```
 
-## Changes of swup instance
+## Changes of the swup instance
 
 The plugin adds the `submitForm` and `openFormSubmitInNewTab` events to swup
-that can be listened to with `on` method.
+that can be listened to with the `on` method.
