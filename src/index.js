@@ -75,7 +75,7 @@ export default class FormPlugin extends Plugin {
                     customTransition,
                 });
             } else {
-                const urlWithQuery = this.appendFormDataAsQueryParameters(url, formData)
+                const urlWithQuery = this.appendQueryParams(url, formData);
 
                 // remove page from cache
                 swup.cache.remove(urlWithQuery);
@@ -91,14 +91,14 @@ export default class FormPlugin extends Plugin {
         }
     }
 
-    appendFormDataAsQueryParameters(url, formData) {
+    appendQueryParams(url, formData) {
         const query = new URLSearchParams(formData).toString()
         if (query && url.indexOf('?') == -1) {
             return url + '?' + query;
         } else if (query) {
             return url + '&' + query;
         } else {
-            return url
+            return url;
         }
     }
 }
