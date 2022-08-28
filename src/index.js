@@ -1,7 +1,7 @@
 import Plugin from '@swup/plugin';
-import delegate from 'delegate';
+import delegate from 'delegate-it';
 import { queryAll } from 'swup/lib/utils';
-import Link from 'swup/lib/helpers/Link';
+import { Link }  from 'swup/lib/helpers';
 
 export default class FormPlugin extends Plugin {
     name = "FormsPlugin";
@@ -36,6 +36,8 @@ export default class FormPlugin extends Plugin {
     }
 
     unmount() {
+        const swup = this.swup;
+
         swup.delegatedListeners.formSubmit.destroy();
     }
 
