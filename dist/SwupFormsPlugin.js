@@ -232,8 +232,6 @@ var _delegateIt = __webpack_require__(5);
 
 var _delegateIt2 = _interopRequireDefault(_delegateIt);
 
-var _utils = __webpack_require__(0);
-
 var _helpers = __webpack_require__(6);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -319,7 +317,7 @@ var FormPlugin = function (_Plugin) {
                         customTransition: customTransition
                     });
                 } else {
-                    var urlWithQuery = this.appendFormDataAsQueryParameters(url, formData);
+                    var urlWithQuery = this.appendQueryParams(url, formData);
 
                     // remove page from cache
                     swup.cache.remove(urlWithQuery);
@@ -335,8 +333,8 @@ var FormPlugin = function (_Plugin) {
             }
         }
     }, {
-        key: 'appendFormDataAsQueryParameters',
-        value: function appendFormDataAsQueryParameters(url, formData) {
+        key: 'appendQueryParams',
+        value: function appendQueryParams(url, formData) {
             var query = new URLSearchParams(formData).toString();
             if (query && url.indexOf('?') == -1) {
                 return url + '?' + query;
@@ -510,7 +508,7 @@ function delegate(base, selector, type, callback, options) {
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Link = exports.markSwupElements = exports.normalizeUrl = exports.getCurrentUrl = exports.transitionProperty = exports.transitionEnd = exports.fetch = exports.getDataFromHtml = exports.createHistoryRecord = exports.classify = undefined;
+exports.cleanupAnimationClasses = exports.Link = exports.markSwupElements = exports.normalizeUrl = exports.getCurrentUrl = exports.transitionProperty = exports.transitionEnd = exports.fetch = exports.getDataFromHtml = exports.createHistoryRecord = exports.classify = undefined;
 
 var _classify = __webpack_require__(7);
 
@@ -552,6 +550,10 @@ var _Link = __webpack_require__(1);
 
 var _Link2 = _interopRequireDefault(_Link);
 
+var _cleanupAnimationClasses = __webpack_require__(16);
+
+var _cleanupAnimationClasses2 = _interopRequireDefault(_cleanupAnimationClasses);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var classify = exports.classify = _classify2.default;
@@ -564,6 +566,7 @@ var getCurrentUrl = exports.getCurrentUrl = _getCurrentUrl2.default;
 var normalizeUrl = exports.normalizeUrl = _normalizeUrl2.default;
 var markSwupElements = exports.markSwupElements = _markSwupElements2.default;
 var Link = exports.Link = _Link2.default;
+var cleanupAnimationClasses = exports.cleanupAnimationClasses = _cleanupAnimationClasses2.default;
 
 /***/ }),
 /* 7 */
@@ -604,7 +607,7 @@ var createHistoryRecord = function createHistoryRecord(url) {
 		url: url || window.location.href.split(window.location.hostname)[1],
 		random: Math.random(),
 		source: 'swup'
-	}, document.getElementsByTagName('title')[0].innerText, url || window.location.href.split(window.location.hostname)[1]);
+	}, document.title, url || window.location.href.split(window.location.hostname)[1]);
 };
 
 exports.default = createHistoryRecord;
@@ -629,11 +632,11 @@ var getDataFromHtml = function getDataFromHtml(html, containers) {
 
 	containers.forEach(function (selector) {
 		if ((0, _utils.query)(selector, fakeDom) == null) {
-			console.error('Container ' + selector + ' not found on page.');
+			console.warn('[swup] Container ' + selector + ' not found on page.');
 			return null;
 		} else {
 			if ((0, _utils.queryAll)(selector).length !== (0, _utils.queryAll)(selector, fakeDom).length) {
-				console.warn('Mismatched number of containers found on new page.');
+				console.warn('[swup] Mismatched number of containers found on new page.');
 			}
 			(0, _utils.queryAll)(selector).forEach(function (item, index) {
 				(0, _utils.queryAll)(selector, fakeDom)[index].setAttribute('data-swup', blocks.length);
@@ -643,7 +646,7 @@ var getDataFromHtml = function getDataFromHtml(html, containers) {
 	});
 
 	var json = {
-		title: fakeDom.querySelector('title').innerText,
+		title: (fakeDom.querySelector('title') || {}).innerText,
 		pageClass: fakeDom.querySelector('body').className,
 		originalContent: html,
 		blocks: blocks
@@ -802,7 +805,7 @@ var markSwupElements = function markSwupElements(element, containers) {
 
 	containers.forEach(function (selector) {
 		if ((0, _utils.query)(selector, element) == null) {
-			console.error('Container ' + selector + ' not found on page.');
+			console.warn('[swup] Container ' + selector + ' not found on page.');
 		} else {
 			(0, _utils.queryAll)(selector).forEach(function (item, index) {
 				(0, _utils.queryAll)(selector, element)[index].setAttribute('data-swup', blocks);
@@ -813,6 +816,30 @@ var markSwupElements = function markSwupElements(element, containers) {
 };
 
 exports.default = markSwupElements;
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+var cleanupAnimationClasses = function cleanupAnimationClasses() {
+	document.documentElement.className.split(' ').forEach(function (classItem) {
+		if (
+		// remove "to-{page}" classes
+		new RegExp('^to-').test(classItem) ||
+		// remove all other classes
+		classItem === 'is-changing' || classItem === 'is-rendering' || classItem === 'is-popstate') {
+			document.documentElement.classList.remove(classItem);
+		}
+	});
+};
+
+exports.default = cleanupAnimationClasses;
 
 /***/ })
 /******/ ]);
