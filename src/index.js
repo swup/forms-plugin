@@ -44,7 +44,7 @@ export default class FormPlugin extends Plugin {
         const swup = this.swup;
 
         // no control key pressed
-        if (!event.metaKey) {
+        if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
             const form = event.target;
             const data = new FormData(form);
             const action = form.getAttribute('action') || window.location.href;
