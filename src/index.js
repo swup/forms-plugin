@@ -1,125 +1,84 @@
 import Plugin from '@swup/plugin';
 import delegate from 'delegate-it';
-import { queryAll } from 'swup/lib/utils';
-import { Link }  from 'swup/lib/helpers';
+import { Link } from 'swup/lib/helpers';
 
 export default class FormPlugin extends Plugin {
-    name = "FormsPlugin";
+	name = 'FormsPlugin';
 
-    constructor(options) {
-        super();
+	constructor(options) {
+		super();
 
-        const defaultOptions = {
-            formSelector: 'form[data-swup-form]'
-        };
+		const defaultOptions = {
+			formSelector: 'form[data-swup-form]'
+		};
 
-        this.options = {
-            ...defaultOptions,
-            ...options
-        };
-    }
+		this.options = {
+			...defaultOptions,
+			...options
+		};
+	}
 
-    mount() {
-        const swup = this.swup;
+	mount() {
+		const swup = this.swup;
 
-        // add empty handlers array for submitForm event
-        swup._handlers.submitForm = [];
-        swup._handlers.openFormSubmitInNewTab = [];
+		// add empty handlers array for submitForm event
+		swup._handlers.submitForm = [];
+		swup._handlers.openFormSubmitInNewTab = [];
 
-        // register handler
-        swup.delegatedListeners.formSubmit = delegate(
-            document,
-            this.options.formSelector,
-            'submit',
-            this.onFormSubmit.bind(this)
-        );
-    }
+		// register handler
+		swup.delegatedListeners.formSubmit = delegate(
+			document,
+			this.options.formSelector,
+			'submit',
+			this.onFormSubmit.bind(this)
+		);
+	}
 
-    unmount() {
-        const swup = this.swup;
+	unmount() {
+		const swup = this.swup;
 
-        swup.delegatedListeners.formSubmit.destroy();
-    }
+		swup.delegatedListeners.formSubmit.destroy();
+	}
 
-    onFormSubmit(event) {
-        const swup = this.swup;
+	onFormSubmit(event) {
+		const swup = this.swup;
 
-        // no control key pressed
-        if (!event.metaKey) {
-            const form = event.target;
-            const formData = new FormData(form);
-            const actionAttribute = form.getAttribute('action') || window.location.href;
-            const methodAttribute = form.getAttribute('method') || 'GET';
-            const link = new Link(actionAttribute);
+		// no control key pressed
+		if (!event.metaKey) {
+			const form = event.target;
+			const data = new FormData(form);
+			const action = form.getAttribute('action') || window.location.href;
+			const method = (form.getAttribute('method') || 'get').toUpperCase();
+			const customTransition = form.getAttribute('data-swup-transition');
 
-            // fomr
-            swup.triggerEvent('submitForm', event);
+			const link = new Link(action);
+			const hash = link.getHash();
+			let url = link.getAddress();
 
-            event.preventDefault();
+			swup.triggerEvent('submitForm', event);
 
-            if (link.getHash() != '') {
-                swup.scrollToElement = link.getHash();
-            }
+			event.preventDefault();
 
-            // get custom transition from data
-            const customTransition = form.getAttribute(
-                'data-swup-transition'
-            );
+			if (hash) {
+				swup.scrollToElement = hash;
+			}
 
-            if (methodAttribute.toLowerCase() != 'get') {
-                // remove page from cache
-                swup.cache.remove(link.getAddress());
+			if (method === 'GET') {
+				url = this.appendQueryParams(url, data);
+				swup.cache.remove(url);
+				swup.loadPage({ url, customTransition });
+			} else {
+				swup.cache.remove(url);
+				swup.loadPage({ url, method, data, customTransition });
+			}
+		} else {
+			swup.triggerEvent('openFormSubmitInNewTab', event);
+		}
+	}
 
-                // send data
-                swup.loadPage({
-                    url: link.getAddress(),
-                    method: methodAttribute,
-                    data: formData,
-                    customTransition,
-                });
-            } else {
-                // create base url
-                let url = link.getAddress() || window.location.href;
-                let inputs = queryAll('input, select', form);
-                if (url.indexOf('?') == -1) {
-                    url += '?';
-                } else {
-                    url += '&';
-                }
-
-                // add form data to url
-                inputs.forEach((input) => {
-                    if (input.type == 'checkbox' || input.type == 'radio') {
-                        if (input.checked) {
-                            url +=
-                                encodeURIComponent(input.name) +
-                                '=' +
-                                encodeURIComponent(input.value) +
-                                '&';
-                        }
-                    } else {
-                        url +=
-                            encodeURIComponent(input.name) +
-                            '=' +
-                            encodeURIComponent(input.value) +
-                            '&';
-                    }
-                });
-
-                // remove last "&"
-                url = url.slice(0, -1);
-
-                // remove page from cache
-                swup.cache.remove(url);
-
-                // send data
-                swup.loadPage({
-                    url: url,
-                    customTransition,
-                });
-            }
-        } else {
-            swup.triggerEvent('openFormSubmitInNewTab', event);
-        }
-    }
+	appendQueryParams(url, formData) {
+		url = url.split('?')[0];
+		const query = new URLSearchParams(formData).toString();
+		return query ? `${url}?${query}` : url;
+	}
 }

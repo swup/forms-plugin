@@ -13,6 +13,7 @@
     "dist"
   ],
   "scripts": {
+    "lint": "prettier src/**/*.{js,mjs} --write",
     "build": "microbundle --external none --no-sourcemap",
     "dev": "microbundle watch --external none --no-sourcemap",
     "prepublish": "npm run build"
@@ -37,5 +38,6 @@
     "@swup/plugin": "^1.0.0",
     "delegate-it": "^3.0.1",
     "swup": "^2.0.13"
-  }
+  },
+  "prettier": "@swup/prettier-config"
 }
