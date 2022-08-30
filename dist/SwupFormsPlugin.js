@@ -286,7 +286,7 @@ var FormPlugin = function (_Plugin) {
             var swup = this.swup;
 
             // no control key pressed
-            if (!event.metaKey) {
+            if (!event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
                 var form = event.target;
                 var data = new FormData(form);
                 var action = form.getAttribute('action') || window.location.href;
