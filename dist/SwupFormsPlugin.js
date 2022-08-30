@@ -252,12 +252,29 @@ var FormPlugin = function (_Plugin) {
 
 		_this.name = 'FormsPlugin';
 
+		_this.onKeyDown = function (e) {
+			if (!_this.specialKeys.hasOwnProperty(e.key)) return;
+			_this.specialKeys[e.key] = true;
+		};
+
+		_this.onKeyUp = function (e) {
+			if (!_this.specialKeys.hasOwnProperty(e.key)) return;
+			_this.specialKeys[e.key] = false;
+		};
 
 		var defaultOptions = {
 			formSelector: 'form[data-swup-form]'
 		};
 
 		_this.options = _extends({}, defaultOptions, options);
+
+		/**
+   * Helps detecting form submits to a new tab
+   */
+		_this.specialKeys = {
+			Meta: false,
+			Control: false
+		};
 		return _this;
 	}
 
@@ -272,6 +289,9 @@ var FormPlugin = function (_Plugin) {
 
 			// register handler
 			swup.delegatedListeners.formSubmit = (0, _delegateIt2.default)(document, this.options.formSelector, 'submit', this.onFormSubmit.bind(this));
+
+			document.addEventListener('keydown', this.onKeyDown);
+			document.addEventListener('keyup', this.onKeyUp);
 		}
 	}, {
 		key: 'unmount',
@@ -279,42 +299,46 @@ var FormPlugin = function (_Plugin) {
 			var swup = this.swup;
 
 			swup.delegatedListeners.formSubmit.destroy();
+
+			document.removeEventListener('keydown', this.onKeyDown);
+			document.removeEventListener('keyup', this.onKeyUp);
 		}
 	}, {
 		key: 'onFormSubmit',
 		value: function onFormSubmit(event) {
 			var swup = this.swup;
 
-			// no control key pressed
-			if (!event.metaKey) {
-				var form = event.target;
-				var data = new FormData(form);
-				var action = form.getAttribute('action') || window.location.href;
-				var method = (form.getAttribute('method') || 'get').toUpperCase();
-				var customTransition = form.getAttribute('data-swup-transition');
+			// Bail early if a special key is pressed
+			if (this.isSpecialKeyPressed()) {
+				this.handleSpecialKeySubmit(event);
+				return;
+			}
 
-				var link = new _helpers.Link(action);
-				var hash = link.getHash();
-				var url = link.getAddress();
+			var form = event.target;
+			var data = new FormData(form);
+			var action = form.getAttribute('action') || window.location.href;
+			var method = (form.getAttribute('method') || 'get').toUpperCase();
+			var customTransition = form.getAttribute('data-swup-transition');
 
-				swup.triggerEvent('submitForm', event);
+			var link = new _helpers.Link(action);
+			var hash = link.getHash();
+			var url = link.getAddress();
 
-				event.preventDefault();
+			swup.triggerEvent('submitForm', event);
 
-				if (hash) {
-					swup.scrollToElement = hash;
-				}
+			event.preventDefault();
 
-				if (method === 'GET') {
-					url = this.appendQueryParams(url, data);
-					swup.cache.remove(url);
-					swup.loadPage({ url: url, customTransition: customTransition });
-				} else {
-					swup.cache.remove(url);
-					swup.loadPage({ url: url, method: method, data: data, customTransition: customTransition });
-				}
+			if (hash) {
+				swup.scrollToElement = hash;
+			}
+
+			if (method === 'GET') {
+				url = this.appendQueryParams(url, data);
+				swup.cache.remove(url);
+				swup.loadPage({ url: url, customTransition: customTransition });
 			} else {
-				swup.triggerEvent('openFormSubmitInNewTab', event);
+				swup.cache.remove(url);
+				swup.loadPage({ url: url, method: method, data: data, customTransition: customTransition });
 			}
 		}
 	}, {
@@ -323,6 +347,54 @@ var FormPlugin = function (_Plugin) {
 			url = url.split('?')[0];
 			var query = new URLSearchParams(formData).toString();
 			return query ? url + '?' + query : url;
+		}
+
+		/**
+   * Is either command or control key down at the moment
+   * @returns {boolean}
+   */
+
+	}, {
+		key: 'isSpecialKeyPressed',
+		value: function isSpecialKeyPressed() {
+			return Object.values(this.specialKeys).some(function (value) {
+				return value;
+			});
+		}
+
+		/**
+   * Adjust `specialKeys` on keyDown
+   * @param {KeyboardEvent} e
+   * @returns {void}
+   */
+
+
+		/**
+   * Adjust `specialKeys` on keyUp
+   * @param {KeyboardEvent} e
+   * @returns {void}
+   */
+
+	}, {
+		key: 'handleSpecialKeySubmit',
+
+
+		/**
+   * Handles a form being submitted while pressing the command and/or control key.
+   * Will wait for a `visibilitychange` for one second, and if it happens and the new
+   * state is 'hidden', fires the event. Will stop to listen after one second.
+   * @param {SubmitEvent} submitEvent
+   */
+		value: function handleSpecialKeySubmit(submitEvent) {
+			var onVisibilityChange = function onVisibilityChange() {
+				if (document.visibilityState === 'hidden') {
+					swup.triggerEvent('openFormSubmitInNewTab', submitEvent);
+				}
+			};
+			window.addEventListener('visibilitychange', onVisibilityChange, { once: true });
+			setTimeout(function () {
+				return window.removeEventListener('visibilitychange', onVisibilityChange);
+			}, 1000);
 		}
 	}]);
 
