@@ -46,45 +46,30 @@ export default class FormPlugin extends Plugin {
         // no control key pressed
         if (!event.metaKey) {
             const form = event.target;
-            const formData = new FormData(form);
-            const actionAttribute = form.getAttribute('action') || window.location.href;
-            const methodAttribute = form.getAttribute('method') || 'GET';
-            const link = new Link(actionAttribute);
-            const url = link.getAddress();
+            const data = new FormData(form);
+            const action = form.getAttribute('action') || window.location.href;
+            const method = (form.getAttribute('method') || 'get').toUpperCase();
+            const customTransition = form.getAttribute('data-swup-transition');
+
+            const link = new Link(action);
+            const hash = link.getHash();
+            let url = link.getAddress();
 
             swup.triggerEvent('submitForm', event);
 
             event.preventDefault();
 
-            if (link.getHash() != '') {
-                swup.scrollToElement = link.getHash();
+            if (hash) {
+                swup.scrollToElement = hash;
             }
 
-            // get custom transition from data
-            const customTransition = form.getAttribute('data-swup-transition');
-
-            if (methodAttribute.toLowerCase() != 'get') {
-                // remove page from cache
+            if (method === 'GET') {
+                url = this.appendQueryParams(url, data);
                 swup.cache.remove(url);
-
-                // send data
-                swup.loadPage({
-                    url,
-                    method: methodAttribute,
-                    data: formData,
-                    customTransition,
-                });
+                swup.loadPage({ url, customTransition });
             } else {
-                const urlWithQuery = this.appendQueryParams(url, formData);
-
-                // remove page from cache
-                swup.cache.remove(urlWithQuery);
-
-                // send data
-                swup.loadPage({
-                    url: urlWithQuery,
-                    customTransition,
-                });
+                swup.cache.remove(url);
+                swup.loadPage({ url, method, data, customTransition });
             }
         } else {
             swup.triggerEvent('openFormSubmitInNewTab', event);
@@ -92,13 +77,8 @@ export default class FormPlugin extends Plugin {
     }
 
     appendQueryParams(url, formData) {
+        url = url.split('?')[0]
         const query = new URLSearchParams(formData).toString()
-        if (query && url.indexOf('?') == -1) {
-            return url + '?' + query;
-        } else if (query) {
-            return url + '&' + query;
-        } else {
-            return url;
-        }
+        return query ? `${url}?${query}` : url;
     }
 }
