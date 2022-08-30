@@ -13,9 +13,8 @@
     "dist"
   ],
   "scripts": {
-    "lint": "prettier src/**/*.{js,mjs} --write",
-    "build": "microbundle --external none --no-sourcemap",
-    "dev": "microbundle watch --external none --no-sourcemap",
+    "lint": "swup-plugin-lint",
+    "build": "swup-plugin-bundle",
     "prepublish": "npm run build"
   },
   "author": {
