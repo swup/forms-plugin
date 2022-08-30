@@ -65,3 +65,10 @@ new SwupFormsPlugin({
 
 The plugin adds the `submitForm` and `openFormSubmitInNewTab` events to swup
 that can be listened to with the `on` method.
+
+## Browser support
+
+Form submissions are serialized using the
+[URLSearchParams](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams)
+browser API. If you need to support older browsers such as IE 11, you should add
+a [polyfill](https://github.com/ungap/url-search-params).

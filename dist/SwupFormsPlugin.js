@@ -232,8 +232,6 @@ var _delegateIt = __webpack_require__(5);
 
 var _delegateIt2 = _interopRequireDefault(_delegateIt);
 
-var _utils = __webpack_require__(0);
-
 var _helpers = __webpack_require__(6);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -290,70 +288,41 @@ var FormPlugin = function (_Plugin) {
             // no control key pressed
             if (!event.metaKey) {
                 var form = event.target;
-                var formData = new FormData(form);
-                var actionAttribute = form.getAttribute('action') || window.location.href;
-                var methodAttribute = form.getAttribute('method') || 'GET';
-                var link = new _helpers.Link(actionAttribute);
+                var data = new FormData(form);
+                var action = form.getAttribute('action') || window.location.href;
+                var method = (form.getAttribute('method') || 'get').toUpperCase();
+                var customTransition = form.getAttribute('data-swup-transition');
 
-                // fomr
+                var link = new _helpers.Link(action);
+                var hash = link.getHash();
+                var url = link.getAddress();
+
                 swup.triggerEvent('submitForm', event);
 
                 event.preventDefault();
 
-                if (link.getHash() != '') {
-                    swup.scrollToElement = link.getHash();
+                if (hash) {
+                    swup.scrollToElement = hash;
                 }
 
-                // get custom transition from data
-                var customTransition = form.getAttribute('data-swup-transition');
-
-                if (methodAttribute.toLowerCase() != 'get') {
-                    // remove page from cache
-                    swup.cache.remove(link.getAddress());
-
-                    // send data
-                    swup.loadPage({
-                        url: link.getAddress(),
-                        method: methodAttribute,
-                        data: formData,
-                        customTransition: customTransition
-                    });
-                } else {
-                    // create base url
-                    var url = link.getAddress() || window.location.href;
-                    var inputs = (0, _utils.queryAll)('input, select', form);
-                    if (url.indexOf('?') == -1) {
-                        url += '?';
-                    } else {
-                        url += '&';
-                    }
-
-                    // add form data to url
-                    inputs.forEach(function (input) {
-                        if (input.type == 'checkbox' || input.type == 'radio') {
-                            if (input.checked) {
-                                url += encodeURIComponent(input.name) + '=' + encodeURIComponent(input.value) + '&';
-                            }
-                        } else {
-                            url += encodeURIComponent(input.name) + '=' + encodeURIComponent(input.value) + '&';
-                        }
-                    });
-
-                    // remove last "&"
-                    url = url.slice(0, -1);
-
-                    // remove page from cache
+                if (method === 'GET') {
+                    url = this.appendQueryParams(url, data);
                     swup.cache.remove(url);
-
-                    // send data
-                    swup.loadPage({
-                        url: url,
-                        customTransition: customTransition
-                    });
+                    swup.loadPage({ url: url, customTransition: customTransition });
+                } else {
+                    swup.cache.remove(url);
+                    swup.loadPage({ url: url, method: method, data: data, customTransition: customTransition });
                 }
             } else {
                 swup.triggerEvent('openFormSubmitInNewTab', event);
             }
+        }
+    }, {
+        key: 'appendQueryParams',
+        value: function appendQueryParams(url, formData) {
+            url = url.split('?')[0];
+            var query = new URLSearchParams(formData).toString();
+            return query ? url + '?' + query : url;
         }
     }]);
 
