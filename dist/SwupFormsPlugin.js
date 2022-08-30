@@ -217,7 +217,7 @@ module.exports = _index2.default; // this is here for webpack to expose SwupPlug
 
 
 Object.defineProperty(exports, "__esModule", {
-    value: true
+	value: true
 });
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
@@ -243,90 +243,90 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var FormPlugin = function (_Plugin) {
-    _inherits(FormPlugin, _Plugin);
+	_inherits(FormPlugin, _Plugin);
 
-    function FormPlugin(options) {
-        _classCallCheck(this, FormPlugin);
+	function FormPlugin(options) {
+		_classCallCheck(this, FormPlugin);
 
-        var _this = _possibleConstructorReturn(this, (FormPlugin.__proto__ || Object.getPrototypeOf(FormPlugin)).call(this));
+		var _this = _possibleConstructorReturn(this, (FormPlugin.__proto__ || Object.getPrototypeOf(FormPlugin)).call(this));
 
-        _this.name = "FormsPlugin";
+		_this.name = 'FormsPlugin';
 
 
-        var defaultOptions = {
-            formSelector: 'form[data-swup-form]'
-        };
+		var defaultOptions = {
+			formSelector: 'form[data-swup-form]'
+		};
 
-        _this.options = _extends({}, defaultOptions, options);
-        return _this;
-    }
+		_this.options = _extends({}, defaultOptions, options);
+		return _this;
+	}
 
-    _createClass(FormPlugin, [{
-        key: 'mount',
-        value: function mount() {
-            var swup = this.swup;
+	_createClass(FormPlugin, [{
+		key: 'mount',
+		value: function mount() {
+			var swup = this.swup;
 
-            // add empty handlers array for submitForm event
-            swup._handlers.submitForm = [];
-            swup._handlers.openFormSubmitInNewTab = [];
+			// add empty handlers array for submitForm event
+			swup._handlers.submitForm = [];
+			swup._handlers.openFormSubmitInNewTab = [];
 
-            // register handler
-            swup.delegatedListeners.formSubmit = (0, _delegateIt2.default)(document, this.options.formSelector, 'submit', this.onFormSubmit.bind(this));
-        }
-    }, {
-        key: 'unmount',
-        value: function unmount() {
-            var swup = this.swup;
+			// register handler
+			swup.delegatedListeners.formSubmit = (0, _delegateIt2.default)(document, this.options.formSelector, 'submit', this.onFormSubmit.bind(this));
+		}
+	}, {
+		key: 'unmount',
+		value: function unmount() {
+			var swup = this.swup;
 
-            swup.delegatedListeners.formSubmit.destroy();
-        }
-    }, {
-        key: 'onFormSubmit',
-        value: function onFormSubmit(event) {
-            var swup = this.swup;
+			swup.delegatedListeners.formSubmit.destroy();
+		}
+	}, {
+		key: 'onFormSubmit',
+		value: function onFormSubmit(event) {
+			var swup = this.swup;
 
-            // no control key pressed
-            if (!event.metaKey) {
-                var form = event.target;
-                var data = new FormData(form);
-                var action = form.getAttribute('action') || window.location.href;
-                var method = (form.getAttribute('method') || 'get').toUpperCase();
-                var customTransition = form.getAttribute('data-swup-transition');
+			// no control key pressed
+			if (!event.metaKey) {
+				var form = event.target;
+				var data = new FormData(form);
+				var action = form.getAttribute('action') || window.location.href;
+				var method = (form.getAttribute('method') || 'get').toUpperCase();
+				var customTransition = form.getAttribute('data-swup-transition');
 
-                var link = new _helpers.Link(action);
-                var hash = link.getHash();
-                var url = link.getAddress();
+				var link = new _helpers.Link(action);
+				var hash = link.getHash();
+				var url = link.getAddress();
 
-                swup.triggerEvent('submitForm', event);
+				swup.triggerEvent('submitForm', event);
 
-                event.preventDefault();
+				event.preventDefault();
 
-                if (hash) {
-                    swup.scrollToElement = hash;
-                }
+				if (hash) {
+					swup.scrollToElement = hash;
+				}
 
-                if (method === 'GET') {
-                    url = this.appendQueryParams(url, data);
-                    swup.cache.remove(url);
-                    swup.loadPage({ url: url, customTransition: customTransition });
-                } else {
-                    swup.cache.remove(url);
-                    swup.loadPage({ url: url, method: method, data: data, customTransition: customTransition });
-                }
-            } else {
-                swup.triggerEvent('openFormSubmitInNewTab', event);
-            }
-        }
-    }, {
-        key: 'appendQueryParams',
-        value: function appendQueryParams(url, formData) {
-            url = url.split('?')[0];
-            var query = new URLSearchParams(formData).toString();
-            return query ? url + '?' + query : url;
-        }
-    }]);
+				if (method === 'GET') {
+					url = this.appendQueryParams(url, data);
+					swup.cache.remove(url);
+					swup.loadPage({ url: url, customTransition: customTransition });
+				} else {
+					swup.cache.remove(url);
+					swup.loadPage({ url: url, method: method, data: data, customTransition: customTransition });
+				}
+			} else {
+				swup.triggerEvent('openFormSubmitInNewTab', event);
+			}
+		}
+	}, {
+		key: 'appendQueryParams',
+		value: function appendQueryParams(url, formData) {
+			url = url.split('?')[0];
+			var query = new URLSearchParams(formData).toString();
+			return query ? url + '?' + query : url;
+		}
+	}]);
 
-    return FormPlugin;
+	return FormPlugin;
 }(_plugin2.default);
 
 exports.default = FormPlugin;
