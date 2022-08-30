@@ -31,7 +31,6 @@ export default class FormPlugin extends Plugin {
 
 		// add empty handlers array for submitForm event
 		swup._handlers.submitForm = [];
-		swup._handlers.openFormSubmitInNewTab = [];
 
 		// register handler
 		swup.delegatedListeners.formSubmit = delegate(
@@ -59,7 +58,6 @@ export default class FormPlugin extends Plugin {
 
 		// Bail early if a special key is pressed
 		if (this.isSpecialKeyPressed()) {
-			this.handleSpecialKeySubmit(event);
 			return;
 		}
 
@@ -124,20 +122,4 @@ export default class FormPlugin extends Plugin {
 		if (!this.specialKeys.hasOwnProperty(e.key)) return;
 		this.specialKeys[e.key] = false;
 	};
-
-	/**
-	 * Handles a form being submitted while pressing the command and/or control key.
-	 * Will wait for a `visibilitychange` for one second, and if it happens and the new
-	 * state is 'hidden', fires the event. Will stop to listen after one second.
-	 * @param {SubmitEvent} submitEvent
-	 */
-	handleSpecialKeySubmit(submitEvent) {
-		const onVisibilityChange = () => {
-			if (document.visibilityState === 'hidden') {
-				swup.triggerEvent('openFormSubmitInNewTab', submitEvent);
-			}
-		};
-		window.addEventListener('visibilitychange', onVisibilityChange, { once: true });
-		setTimeout(() => window.removeEventListener('visibilitychange', onVisibilityChange), 1000);
-	}
 }
