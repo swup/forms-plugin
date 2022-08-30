@@ -273,7 +273,8 @@ var FormPlugin = function (_Plugin) {
    */
 		_this.specialKeys = {
 			Meta: false,
-			Control: false
+			Control: false,
+			Shift: false
 		};
 		return _this;
 	}
