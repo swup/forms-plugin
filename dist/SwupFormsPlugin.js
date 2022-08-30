@@ -285,7 +285,6 @@ var FormPlugin = function (_Plugin) {
 
 			// add empty handlers array for submitForm event
 			swup._handlers.submitForm = [];
-			swup._handlers.openFormSubmitInNewTab = [];
 
 			// register handler
 			swup.delegatedListeners.formSubmit = (0, _delegateIt2.default)(document, this.options.formSelector, 'submit', this.onFormSubmit.bind(this));
@@ -310,7 +309,6 @@ var FormPlugin = function (_Plugin) {
 
 			// Bail early if a special key is pressed
 			if (this.isSpecialKeyPressed()) {
-				this.handleSpecialKeySubmit(event);
 				return;
 			}
 
@@ -375,27 +373,6 @@ var FormPlugin = function (_Plugin) {
    * @returns {void}
    */
 
-	}, {
-		key: 'handleSpecialKeySubmit',
-
-
-		/**
-   * Handles a form being submitted while pressing the command and/or control key.
-   * Will wait for a `visibilitychange` for one second, and if it happens and the new
-   * state is 'hidden', fires the event. Will stop to listen after one second.
-   * @param {SubmitEvent} submitEvent
-   */
-		value: function handleSpecialKeySubmit(submitEvent) {
-			var onVisibilityChange = function onVisibilityChange() {
-				if (document.visibilityState === 'hidden') {
-					swup.triggerEvent('openFormSubmitInNewTab', submitEvent);
-				}
-			};
-			window.addEventListener('visibilitychange', onVisibilityChange, { once: true });
-			setTimeout(function () {
-				return window.removeEventListener('visibilitychange', onVisibilityChange);
-			}, 1000);
-		}
 	}]);
 
 	return FormPlugin;
