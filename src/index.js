@@ -22,7 +22,8 @@ export default class FormPlugin extends Plugin {
 		 */
 		this.specialKeys = {
 			Meta: false,
-			Control: false
+			Control: false,
+			Shift: false
 		};
 	}
 
