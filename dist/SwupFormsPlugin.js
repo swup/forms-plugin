@@ -286,9 +286,13 @@ var FormPlugin = function (_Plugin) {
 
 			// add empty handlers array for submitForm event
 			swup._handlers.submitForm = [];
+			swup._handlers.submitFormPrevented = [];
 
-			// register handler
-			swup.delegatedListeners.formSubmit = (0, _delegateIt2.default)(document, this.options.formSelector, 'submit', this.onFormSubmit.bind(this));
+			// Register the submit handler. Using `capture:true` to be 
+			// able to set the form's target attribute on the fly.
+			swup.delegatedListeners.formSubmit = (0, _delegateIt2.default)(document, this.options.formSelector, 'submit', this.onFormSubmit.bind(this), {
+				capture: true
+			});
 
 			document.addEventListener('keydown', this.onKeyDown);
 			document.addEventListener('keyup', this.onKeyUp);
@@ -308,8 +312,21 @@ var FormPlugin = function (_Plugin) {
 		value: function onFormSubmit(event) {
 			var swup = this.swup;
 
-			// Bail early if a special key is pressed
-			if (this.isSpecialKeyPressed()) {
+			// Always trigger the submitForm event,
+			// allowing it to be `defaultPrevented`
+			swup.triggerEvent('submitForm', event);
+
+			// Open the form in a new window if Shift is pressed
+			if (this.specialKeys.Shift) {
+				this.swup.log("[swup] Form submitted to a new window");
+				event.target.target = '_blank';
+				return;
+			}
+
+			// Open the form in a new tab if either command or control is pressed
+			if (this.specialKeys.Meta || this.specialKeys.Control) {
+				this.swup.log("[swup] Form submitted to a new tab");
+				event.target.target = '_blank';
 				return;
 			}
 
@@ -323,7 +340,10 @@ var FormPlugin = function (_Plugin) {
 			var hash = link.getHash();
 			var url = link.getAddress();
 
-			swup.triggerEvent('submitForm', event);
+			if (event.defaultPrevented) {
+				swup.triggerEvent('submitFormPrevented', event);
+				return;
+			}
 
 			event.preventDefault();
 
