@@ -34,7 +34,7 @@ export default class FormPlugin extends Plugin {
 		swup._handlers.submitForm = [];
 		swup._handlers.openFormSubmitInNewTab = [];
 
-		// Register the submit handler. Using `capture:true` to be 
+		// Register the submit handler. Using `capture:true` to be
 		// able to set the form's target attribute on the fly.
 		swup.delegatedListeners.formSubmit = delegate(
 			document,
@@ -61,17 +61,16 @@ export default class FormPlugin extends Plugin {
 
 	/**
 	 * Handles form 'submit' events during the capture phase
-	 * @param {SubmitEvent} event 
+	 * @param {SubmitEvent} event
 	 * @returns {void}
 	 */
 	beforeFormSubmit(event) {
-
 		/**
 		 * Always trigger the submitForm event,
 		 * allowing it to be `defaultPrevented`
 		 */
 		swup.triggerEvent('submitForm', event);
-		
+
 		const form = event.target;
 
 		/**
@@ -79,33 +78,35 @@ export default class FormPlugin extends Plugin {
 		 * Normalizes behavior across browsers.
 		 */
 		if (this.isSpecialKeyPressed()) {
-
 			swup.triggerEvent('openFormSubmitInNewTab', event);
 
 			const previousFormTarget = form.getAttribute('target');
 
 			form.setAttribute('target', '_blank');
 
-			form.addEventListener('submit', event => {
-				requestAnimationFrame(() => {
-					this.restorePreviousFormTarget(event.target, previousFormTarget);
-				})
-			}, {once: true});
+			form.addEventListener(
+				'submit',
+				(event) => {
+					requestAnimationFrame(() => {
+						this.restorePreviousFormTarget(event.target, previousFormTarget);
+					});
+				},
+				{ once: true }
+			);
 
 			return;
 		}
 
-		this.submitForm(event);		
-		
+		this.submitForm(event);
 	}
 
 	/**
 	 * Restores the previous form target if available
-	 * @param {HTMLFormElement} form 
+	 * @param {HTMLFormElement} form
 	 * @returns {void}
 	 */
 	restorePreviousFormTarget(form, previousTarget) {
-		if( previousTarget ) {
+		if (previousTarget) {
 			form.setAttribute('target', previousTarget);
 		} else {
 			form.removeAttribute('target');
@@ -114,7 +115,7 @@ export default class FormPlugin extends Plugin {
 
 	/**
 	 * Submits a form through swup
-	 * @param {SubmitEvent} event 
+	 * @param {SubmitEvent} event
 	 * @returns {void}
 	 */
 	submitForm(event) {
@@ -148,9 +149,9 @@ export default class FormPlugin extends Plugin {
 
 	/**
 	 * Appends query parameters to a URL
-	 * @param {string} url 
-	 * @param {FormData} formData 
-	 * @returns {string} 
+	 * @param {string} url
+	 * @param {FormData} formData
+	 * @returns {string}
 	 */
 	appendQueryParams(url, formData) {
 		url = url.split('?')[0];
