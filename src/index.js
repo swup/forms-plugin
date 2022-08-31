@@ -78,6 +78,8 @@ export default class FormPlugin extends Plugin {
 		 * Normalizes behavior across browsers.
 		 */
 		if (this.isSpecialKeyPressed()) {
+			this.resetSpecialKeys();
+
 			swup.triggerEvent('openFormSubmitInNewTab', event);
 
 			const previousFormTarget = form.getAttribute('target');
@@ -165,6 +167,15 @@ export default class FormPlugin extends Plugin {
 	 */
 	isSpecialKeyPressed() {
 		return Object.values(this.specialKeys).some((value) => value);
+	}
+
+	/**
+	 * Reset all entries in `specialKeys` to false
+	 */
+	resetSpecialKeys() {
+		for (const [key, value] of Object.entries(this.specialKeys)) {
+			this.specialKeys[key] = false;
+		}
 	}
 
 	/**
