@@ -32,7 +32,7 @@ export default class FormPlugin extends Plugin {
 
 		// add empty handlers array for submitForm event
 		swup._handlers.submitForm = [];
-		swup._handlers.submitFormPrevented = [];
+		swup._handlers.openFormSubmitInNewTab = [];
 
 		// Register the submit handler. Using `capture:true` to be 
 		// able to set the form's target attribute on the fly.
@@ -40,7 +40,7 @@ export default class FormPlugin extends Plugin {
 			document,
 			this.options.formSelector,
 			'submit',
-			this.onFormSubmit.bind(this),
+			this.beforeFormSubmit.bind(this),
 			{
 				capture: true
 			}
@@ -59,26 +59,68 @@ export default class FormPlugin extends Plugin {
 		document.removeEventListener('keyup', this.onKeyUp);
 	}
 
-	onFormSubmit(event) {
-		const swup = this.swup;
-		
-		// Always trigger the submitForm event,
-		// allowing it to be `defaultPrevented`
+	/**
+	 * Handles form 'submit' events during the capture phase
+	 * @param {SubmitEvent} event 
+	 * @returns {void}
+	 */
+	beforeFormSubmit(event) {
+
+		/**
+		 * Always trigger the submitForm event,
+		 * allowing it to be `defaultPrevented`
+		 */
 		swup.triggerEvent('submitForm', event);
+		
+		const form = event.target;
 
-		// Open the form in a new window if Shift is pressed
-		if( this.specialKeys.Shift ) {
-			this.swup.log("[swup] Form submitted to a new window");
-			event.target.target = '_blank';
+		/**
+		 * Open the form in a new tab if either Command (Mac), Control (Windows) or Shift is pressed.
+		 * Normalizes behavior across browsers.
+		 */
+		if (this.isSpecialKeyPressed()) {
+
+			swup.triggerEvent('openFormSubmitInNewTab', event);
+
+			const previousFormTarget = form.getAttribute('target');
+
+			form.setAttribute('target', '_blank');
+
+			form.addEventListener('submit', event => {
+				requestAnimationFrame(() => {
+					this.restorePreviousFormTarget(event.target, previousFormTarget);
+				})
+			}, {once: true});
+
 			return;
 		}
 
-		// Open the form in a new tab if either command or control is pressed
-		if (this.specialKeys.Meta || this.specialKeys.Control) {
-			this.swup.log("[swup] Form submitted to a new tab");
-			event.target.target = '_blank';
-			return;
+		this.submitForm(event);		
+		
+	}
+
+	/**
+	 * Restores the previous form target if available
+	 * @param {HTMLFormElement} form 
+	 * @returns {void}
+	 */
+	restorePreviousFormTarget(form, previousTarget) {
+		if( previousTarget ) {
+			form.setAttribute('target', previousTarget);
+		} else {
+			form.removeAttribute('target');
 		}
+	}
+
+	/**
+	 * Submits a form through swup
+	 * @param {SubmitEvent} event 
+	 * @returns {void}
+	 */
+	submitForm(event) {
+		const swup = this.swup;
+
+		event.preventDefault();
 
 		const form = event.target;
 		const data = new FormData(form);
@@ -89,13 +131,6 @@ export default class FormPlugin extends Plugin {
 		const link = new Link(action);
 		const hash = link.getHash();
 		let url = link.getAddress();
-		
-		if( event.defaultPrevented ) {
-			swup.triggerEvent('submitFormPrevented', event);
-			return;
-		}
-		
-		event.preventDefault();
 
 		if (hash) {
 			swup.scrollToElement = hash;
@@ -111,6 +146,12 @@ export default class FormPlugin extends Plugin {
 		}
 	}
 
+	/**
+	 * Appends query parameters to a URL
+	 * @param {string} url 
+	 * @param {FormData} formData 
+	 * @returns {string} 
+	 */
 	appendQueryParams(url, formData) {
 		url = url.split('?')[0];
 		const query = new URLSearchParams(formData).toString();
