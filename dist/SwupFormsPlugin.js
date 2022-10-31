@@ -321,6 +321,8 @@ var FormPlugin = function (_Plugin) {
 		value: function beforeFormSubmit(event) {
 			var _this2 = this;
 
+			var swup = this.swup;
+
 			/**
     * Always trigger the submitForm event,
     * allowing it to be `defaultPrevented`
