@@ -65,6 +65,8 @@ export default class FormPlugin extends Plugin {
 	 * @returns {void}
 	 */
 	beforeFormSubmit(event) {
+		const swup = this.swup;
+
 		/**
 		 * Always trigger the submitForm event,
 		 * allowing it to be `defaultPrevented`
