@@ -220,6 +220,8 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -252,12 +254,30 @@ var FormPlugin = function (_Plugin) {
 
 		_this.name = 'FormsPlugin';
 
+		_this.onKeyDown = function (e) {
+			if (!_this.specialKeys.hasOwnProperty(e.key)) return;
+			_this.specialKeys[e.key] = true;
+		};
+
+		_this.onKeyUp = function (e) {
+			if (!_this.specialKeys.hasOwnProperty(e.key)) return;
+			_this.specialKeys[e.key] = false;
+		};
 
 		var defaultOptions = {
 			formSelector: 'form[data-swup-form]'
 		};
 
 		_this.options = _extends({}, defaultOptions, options);
+
+		/**
+   * Helps detecting form submits to a new tab
+   */
+		_this.specialKeys = {
+			Meta: false,
+			Control: false,
+			Shift: false
+		};
 		return _this;
 	}
 
@@ -270,8 +290,14 @@ var FormPlugin = function (_Plugin) {
 			swup._handlers.submitForm = [];
 			swup._handlers.openFormSubmitInNewTab = [];
 
-			// register handler
-			swup.delegatedListeners.formSubmit = (0, _delegateIt2.default)(document, this.options.formSelector, 'submit', this.onFormSubmit.bind(this));
+			// Register the submit handler. Using `capture:true` to be
+			// able to set the form's target attribute on the fly.
+			swup.delegatedListeners.formSubmit = (0, _delegateIt2.default)(document, this.options.formSelector, 'submit', this.beforeFormSubmit.bind(this), {
+				capture: true
+			});
+
+			document.addEventListener('keydown', this.onKeyDown);
+			document.addEventListener('keyup', this.onKeyUp);
 		}
 	}, {
 		key: 'unmount',
@@ -279,44 +305,117 @@ var FormPlugin = function (_Plugin) {
 			var swup = this.swup;
 
 			swup.delegatedListeners.formSubmit.destroy();
+
+			document.removeEventListener('keydown', this.onKeyDown);
+			document.removeEventListener('keyup', this.onKeyUp);
 		}
+
+		/**
+   * Handles form 'submit' events during the capture phase
+   * @param {SubmitEvent} event
+   * @returns {void}
+   */
+
 	}, {
-		key: 'onFormSubmit',
-		value: function onFormSubmit(event) {
+		key: 'beforeFormSubmit',
+		value: function beforeFormSubmit(event) {
+			var _this2 = this;
+
 			var swup = this.swup;
 
-			// no control key pressed
-			if (!event.metaKey) {
-				var form = event.target;
-				var data = new FormData(form);
-				var action = form.getAttribute('action') || window.location.href;
-				var method = (form.getAttribute('method') || 'get').toUpperCase();
-				var customTransition = form.getAttribute('data-swup-transition');
+			/**
+    * Always trigger the submitForm event,
+    * allowing it to be `defaultPrevented`
+    */
+			swup.triggerEvent('submitForm', event);
 
-				var link = new _helpers.Link(action);
-				var hash = link.getHash();
-				var url = link.getAddress();
+			var form = event.target;
 
-				swup.triggerEvent('submitForm', event);
+			/**
+    * Open the form in a new tab if either Command (Mac), Control (Windows) or Shift is pressed.
+    * Normalizes behavior across browsers.
+    */
+			if (this.isSpecialKeyPressed()) {
+				this.resetSpecialKeys();
 
-				event.preventDefault();
-
-				if (hash) {
-					swup.scrollToElement = hash;
-				}
-
-				if (method === 'GET') {
-					url = this.appendQueryParams(url, data);
-					swup.cache.remove(url);
-					swup.loadPage({ url: url, customTransition: customTransition });
-				} else {
-					swup.cache.remove(url);
-					swup.loadPage({ url: url, method: method, data: data, customTransition: customTransition });
-				}
-			} else {
 				swup.triggerEvent('openFormSubmitInNewTab', event);
+
+				var previousFormTarget = form.getAttribute('target');
+
+				form.setAttribute('target', '_blank');
+
+				form.addEventListener('submit', function (event) {
+					requestAnimationFrame(function () {
+						_this2.restorePreviousFormTarget(event.target, previousFormTarget);
+					});
+				}, { once: true });
+
+				return;
+			}
+
+			this.submitForm(event);
+		}
+
+		/**
+   * Restores the previous form target if available
+   * @param {HTMLFormElement} form
+   * @returns {void}
+   */
+
+	}, {
+		key: 'restorePreviousFormTarget',
+		value: function restorePreviousFormTarget(form, previousTarget) {
+			if (previousTarget) {
+				form.setAttribute('target', previousTarget);
+			} else {
+				form.removeAttribute('target');
 			}
 		}
+
+		/**
+   * Submits a form through swup
+   * @param {SubmitEvent} event
+   * @returns {void}
+   */
+
+	}, {
+		key: 'submitForm',
+		value: function submitForm(event) {
+			var swup = this.swup;
+
+			event.preventDefault();
+
+			var form = event.target;
+			var data = new FormData(form);
+			var action = form.getAttribute('action') || window.location.href;
+			var method = (form.getAttribute('method') || 'get').toUpperCase();
+			var customTransition = form.getAttribute('data-swup-transition');
+
+			var link = new _helpers.Link(action);
+			var hash = link.getHash();
+			var url = link.getAddress();
+
+			if (hash) {
+				swup.scrollToElement = hash;
+			}
+
+			if (method === 'GET') {
+				url = this.appendQueryParams(url, data);
+				swup.cache.remove(url);
+				swup.loadPage({ url: url, customTransition: customTransition });
+			} else {
+				swup.cache.remove(url);
+				swup.loadPage({ url: url, method: method, data: data, customTransition: customTransition });
+			}
+		}
+
+		/**
+   * Appends query parameters to a URL
+   * @param {string} url
+   * @param {FormData} formData
+   * @returns {string}
+   */
+
 	}, {
 		key: 'appendQueryParams',
 		value: function appendQueryParams(url, formData) {
@@ -324,6 +423,68 @@ var FormPlugin = function (_Plugin) {
 			var query = new URLSearchParams(formData).toString();
 			return query ? url + '?' + query : url;
 		}
+
+		/**
+   * Is either command or control key down at the moment
+   * @returns {boolean}
+   */
+
+	}, {
+		key: 'isSpecialKeyPressed',
+		value: function isSpecialKeyPressed() {
+			return Object.values(this.specialKeys).some(function (value) {
+				return value;
+			});
+		}
+
+		/**
+   * Reset all entries in `specialKeys` to false
+   */
+
+	}, {
+		key: 'resetSpecialKeys',
+		value: function resetSpecialKeys() {
+			var _iteratorNormalCompletion = true;
+			var _didIteratorError = false;
+			var _iteratorError = undefined;
+
+			try {
+				for (var _iterator = Object.entries(this.specialKeys)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+					var _step$value = _slicedToArray(_step.value, 2),
+					    key = _step$value[0],
+					    value = _step$value[1];
+
+					this.specialKeys[key] = false;
+				}
+			} catch (err) {
+				_didIteratorError = true;
+				_iteratorError = err;
+			} finally {
+				try {
+					if (!_iteratorNormalCompletion && _iterator.return) {
+						_iterator.return();
+					}
+				} finally {
+					if (_didIteratorError) {
+						throw _iteratorError;
+					}
+				}
+			}
+		}
+
+		/**
+   * Adjust `specialKeys` on keyDown
+   * @param {KeyboardEvent} e
+   * @returns {void}
+   */
+
+
+		/**
+   * Adjust `specialKeys` on keyUp
+   * @param {KeyboardEvent} e
+   * @returns {void}
+   */
+
 	}]);
 
 	return FormPlugin;
