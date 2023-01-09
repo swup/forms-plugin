@@ -13,8 +13,9 @@
     "dist"
   ],
   "scripts": {
-    "lint": "swup-plugin-lint",
-    "build": "swup-plugin-bundle",
+    "build": "swup-plugin build",
+    "dev": "swup-plugin dev",
+    "lint": "swup-plugin lint",
     "prepublish": "npm run build"
   },
   "author": {
@@ -28,14 +29,10 @@
     "url": "https://github.com/swup/forms-plugin.git"
   },
   "devDependencies": {
-    "@swup/prettier-config": "^1.0.0",
-    "microbundle": "^0.15.1",
-    "prettier": "^2.7.1"
+    "swup": "file:../swup"
   },
-  "dependencies": {
-    "@swup/plugin": "^1.0.0",
-    "delegate-it": "^3.0.1",
-    "swup": "^2.0.13"
+  "peerDependencies": {
+    "swup": "^3.0.0"
   },
   "prettier": "@swup/prettier-config"
 }
