@@ -7,8 +7,8 @@
   "source": "src/index.js",
   "main": "./dist/index.cjs",
   "module": "./dist/index.module.js",
-  "unpkg": "./dist/index.umd.js",
   "exports": "./dist/index.modern.js",
+  "unpkg": "./dist/index.umd.js",
   "files": [
     "dist"
   ],
@@ -16,6 +16,7 @@
     "build": "swup-plugin build",
     "dev": "swup-plugin dev",
     "lint": "swup-plugin lint",
+    "format": "swup-plugin format",
     "prepublish": "npm run build"
   },
   "author": {
@@ -29,7 +30,7 @@
     "url": "https://github.com/swup/forms-plugin.git"
   },
   "devDependencies": {
-    "swup": "file:../swup"
+    "swup": "3.0.0-rc.3"
   },
   "peerDependencies": {
     "swup": "^3.0.0"
