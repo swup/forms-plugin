@@ -131,7 +131,7 @@ export default class FormPlugin extends Plugin {
 		const method = (form.getAttribute('method') || 'get').toUpperCase();
 		const customTransition = form.getAttribute('data-swup-transition');
 
-		let { url, hash } = Location.from(action);
+		let { url, hash } = Location.fromUrl(action);
 
 		if (hash) {
 			swup.scrollToElement = hash;
