@@ -1,5 +1,5 @@
 import Plugin from '@swup/plugin';
-import { Location } from 'swup/helpers';
+import { Location, getCurrentUrl } from 'swup';
 
 export default class FormPlugin extends Plugin {
 	name = 'FormsPlugin';
@@ -130,7 +130,7 @@ export default class FormPlugin extends Plugin {
 
 		const form = event.target;
 		const data = new FormData(form);
-		const action = form.getAttribute('action') || window.location.href;
+		const action = form.getAttribute('action') || getCurrentUrl();
 		const method = (form.getAttribute('method') || 'get').toUpperCase();
 		const customTransition = form.getAttribute('data-swup-transition');
 
