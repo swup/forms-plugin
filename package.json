@@ -29,6 +29,9 @@
     "type": "git",
     "url": "https://github.com/swup/forms-plugin.git"
   },
+  "dependencies": {
+    "@swup/plugin": "2.0.0-rc.2"
+  },
   "devDependencies": {
     "swup": "3.0.0-rc.3"
   },
