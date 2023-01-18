@@ -1,6 +1,5 @@
 import Plugin from '@swup/plugin';
-import delegate from 'delegate-it';
-import { Link } from 'swup/lib/helpers';
+import { Location, getCurrentUrl } from 'swup';
 
 export default class FormPlugin extends Plugin {
 	name = 'FormsPlugin';
@@ -36,8 +35,7 @@ export default class FormPlugin extends Plugin {
 
 		// Register the submit handler. Using `capture:true` to be
 		// able to set the form's target attribute on the fly.
-		swup.delegatedListeners.formSubmit = delegate(
-			document,
+		swup.delegatedListeners.formSubmit = swup.delegateEvent(
 			this.options.formSelector,
 			'submit',
 			this.beforeFormSubmit.bind(this),
@@ -129,13 +127,11 @@ export default class FormPlugin extends Plugin {
 
 		const form = event.target;
 		const data = new FormData(form);
-		const action = form.getAttribute('action') || window.location.href;
+		const action = form.getAttribute('action') || getCurrentUrl();
 		const method = (form.getAttribute('method') || 'get').toUpperCase();
 		const customTransition = form.getAttribute('data-swup-transition');
 
-		const link = new Link(action);
-		const hash = link.getHash();
-		let url = link.getAddress();
+		let { url, hash } = Location.fromUrl(action);
 
 		if (hash) {
 			swup.scrollToElement = hash;

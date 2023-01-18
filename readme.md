@@ -19,22 +19,20 @@ serialization, it is recommended to use the swup API directly.
 
 ## Installation
 
-This plugin can be installed with npm
+Install the plugin from npm and import it into your bundle.
 
 ```bash
 npm install @swup/forms-plugin
 ```
 
-and included with import
-
-```shell
+```js
 import SwupFormsPlugin from '@swup/forms-plugin';
 ```
 
-or included from the dist folder
+Or include the minified production file from a CDN:
 
 ```html
-<script src="./dist/SwupFormsPlugin.js"></script>
+<script src="https://unpkg.com/@swup/forms-plugin@2"></script>
 ```
 
 ## Usage
@@ -65,7 +63,7 @@ new SwupFormsPlugin({
 
 The plugin adds two events to swup:
 
-### `submitForm` 
+### `submitForm`
 
 Triggered every time a form is being submitted:
 
