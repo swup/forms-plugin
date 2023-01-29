@@ -1,7 +1,7 @@
 {
   "name": "@swup/forms-plugin",
   "amdName": "SwupFormsPlugin",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Swup forms plugin - adds support for forms.",
   "type": "module",
   "source": "src/index.js",
@@ -30,13 +30,16 @@
     "url": "https://github.com/swup/forms-plugin.git"
   },
   "dependencies": {
-    "@swup/plugin": "2.0.0-rc.3"
+    "@swup/plugin": "^2.0.0"
   },
   "devDependencies": {
-    "swup": "3.0.0-rc.4"
+    "swup": "^3.0.0"
   },
   "peerDependencies": {
     "swup": "^3.0.0"
   },
+  "browserslist": [
+    "extends @swup/browserslist-config"
+  ],
   "prettier": "@swup/prettier-config"
 }
