@@ -86,28 +86,28 @@ export default class FormPlugin extends Plugin {
 		 */
 		swup.triggerEvent('submitForm', event);
 
-		const form = event.target;
+		/**
+		 * Open the form in a new tab because of its target attribute
+		 */
+		if (opensInNewTabFromTargetAttr) {
+			swup.triggerEvent('openFormSubmitInNewTab', event);
+			return;
+		}
 
 		/**
 		 * Open the form in a new tab if either Command (Mac), Control (Windows) or Shift is pressed.
 		 * Normalizes behavior across browsers.
 		 */
-		if (this.isSpecialKeyPressed()) {
+		if (opensInNewTabFromKeyPress) {
 			this.resetSpecialKeys();
 
 			swup.triggerEvent('openFormSubmitInNewTab', event);
 
-			const previousFormTarget = form.getAttribute('target');
-
+			form.dataset.swupOriginalFormTarget = form.getAttribute('target') || '';
 			form.setAttribute('target', '_blank');
-
 			form.addEventListener(
 				'submit',
-				(event) => {
-					requestAnimationFrame(() => {
-						this.restorePreviousFormTarget(event.target, previousFormTarget);
-					});
-				},
+				() => requestAnimationFrame(() => this.restorePreviousFormTarget(form)),
 				{ once: true }
 			);
 
@@ -122,9 +122,9 @@ export default class FormPlugin extends Plugin {
 	 * @param {HTMLFormElement} form
 	 * @returns {void}
 	 */
-	restorePreviousFormTarget(form, previousTarget) {
-		if (previousTarget) {
-			form.setAttribute('target', previousTarget);
+	restorePreviousFormTarget(form) {
+		if (form.dataset.swupOriginalFormTarget) {
+			form.setAttribute('target', form.dataset.swupOriginalFormTarget);
 		} else {
 			form.removeAttribute('target');
 		}
