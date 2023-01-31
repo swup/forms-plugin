@@ -4,6 +4,8 @@ import { Location, getCurrentUrl } from 'swup';
 export default class FormPlugin extends Plugin {
 	name = 'FormsPlugin';
 
+	requires = { swup: '>=3.0.0' };
+
 	constructor(options) {
 		super();
 
