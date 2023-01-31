@@ -66,6 +66,19 @@ export default class FormPlugin extends Plugin {
 	 */
 	beforeFormSubmit(event) {
 		const swup = this.swup;
+		const form = event.target;
+		const action = form.getAttribute('action') || getCurrentUrl();
+		const opensInNewTabFromKeyPress = this.isSpecialKeyPressed();
+		const opensInNewTabFromTargetAttr = form.getAttribute('target') === '_blank';
+		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
+
+		/**
+		 * Allow ignoring this form submission via callback
+		 * No use in checking if it will open in a new tab anyway
+		 */
+		if (!opensInNewTab && this.swup.shouldIgnoreVisit(action, { el: form, event })) {
+			return;
+		}
 
 		/**
 		 * Always trigger the submitForm event,
