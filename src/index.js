@@ -143,11 +143,11 @@ export default class SwupFormsPlugin extends Plugin {
 
 		if (method === 'GET') {
 			url = this.appendQueryParams(url, data);
-			swup.cache.remove(url);
 			swup.loadPage({ url, customTransition });
+			this.swup.cache.delete(url);
 		} else {
-			swup.cache.remove(url);
 			swup.loadPage({ url, method, data, customTransition });
+			this.swup.cache.delete(url);
 		}
 	}
 
