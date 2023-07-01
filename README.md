@@ -1,17 +1,13 @@
-# Swup Forms plugin
+# Swup Forms Plugin
 
-Add support for sending forms via swup.
+A [swup](https://swup.js.org) plugin for submitting forms.
 
-Forms matching the customizable [selector](#formselector) `form[data-swup-form]`
-will be serialized and submitted by swup. The appropriate `method` and `action`
-are derived from the form's attributes. If not specified otherwise, forms are
-submitted as `GET` requests to the current url.
+Forms with a `data-swup-form` attribute will be serialized and submitted by swup,
+including page transitions just like normal link clicks.
+Set a custom transition name using the `data-swup-transition` attribute on the form element.
 
-The server response must be a valid page with all containers to be replaced by
-swup.
+The action, method and encoding type attributes set on the form are respected. The server response must be a valid page with all containers to be replaced by swup.
 
-If a `data-swup-transition` attribute is found on the form element, it is used
-to select the swup animation.
 
 **Note:** This plugin is appropriate for simple use cases like search inputs or
 contact forms. For more complex requirements involving file uploads or custom
@@ -32,7 +28,7 @@ import SwupFormsPlugin from '@swup/forms-plugin';
 Or include the minified production file from a CDN:
 
 ```html
-<script src="https://unpkg.com/@swup/forms-plugin@2"></script>
+<script src="https://unpkg.com/@swup/forms-plugin@3"></script>
 ```
 
 ## Usage
@@ -50,8 +46,7 @@ const swup = new Swup({
 ### formSelector
 
 The `formSelector` option defines a selector for forms which should be sent via
-swup (with transition as any other request). By default, any form with a
-`data-swup-form` attribute is selected.
+swup. By default, any form with a `data-swup-form` attribute is selected.
 
 ```javascript
 new SwupFormsPlugin({
@@ -59,21 +54,25 @@ new SwupFormsPlugin({
 });
 ```
 
-## Changes of the swup instance
+## Hooks
 
-The plugin adds two events to swup:
+The plugin adds two new hooks to swup.
 
 ### `submitForm`
 
-Triggered every time a form is being submitted:
+Triggered when a form is submitted.
 
 ```js
-swup.on('submitForm', e => console.log(e));
+swup.hooks.on('submitForm', (context, { form, event }) => {
+  console.log(form);
+});
 ```
 
 ### `openFormSubmitInNewTab`
 
-Triggered each time a form is being submitted to a new tab or window. This will happen if the user has pressed either the `Command` (Mac), `Control` (Windows) or `Shift` key while submitting the form. The plugin normalizes that behavior across browsers.
+Triggered when a form is submitted to a new tab or window. This will happen if the user
+has pressed either the `Command` (Mac), `Control` (Windows) or `Shift` key while submitting
+the form. The plugin normalizes that behavior across browsers.
 
 ## Browser support
 
