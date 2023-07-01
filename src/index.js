@@ -6,26 +6,20 @@ export default class SwupFormsPlugin extends Plugin {
 
 	requires = { swup: '>=4.0.0' };
 
-	constructor(options) {
+	defaults = {
+		formSelector: 'form[data-swup-form]'
+	};
+
+	// Track pressed keys to detect form submissions to a new tab
+	specialKeys = {
+		Meta: false,
+		Control: false,
+		Shift: false
+	};
+
+	constructor(options = {}) {
 		super();
-
-		const defaultOptions = {
-			formSelector: 'form[data-swup-form]'
-		};
-
-		this.options = {
-			...defaultOptions,
-			...options
-		};
-
-		/**
-		 * Helps detecting form submits to a new tab
-		 */
-		this.specialKeys = {
-			Meta: false,
-			Control: false,
-			Shift: false
-		};
+		this.options = { ...this.defaults, ...options };
 	}
 
 	mount() {
