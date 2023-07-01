@@ -4,6 +4,8 @@ import { Location, getCurrentUrl } from 'swup';
 export default class FormPlugin extends Plugin {
 	name = 'FormsPlugin';
 
+	requires = { swup: '>=3.0.0' };
+
 	constructor(options) {
 		super();
 
@@ -64,6 +66,19 @@ export default class FormPlugin extends Plugin {
 	 */
 	beforeFormSubmit(event) {
 		const swup = this.swup;
+		const form = event.target;
+		const action = form.getAttribute('action') || getCurrentUrl();
+		const opensInNewTabFromKeyPress = this.isSpecialKeyPressed();
+		const opensInNewTabFromTargetAttr = form.getAttribute('target') === '_blank';
+		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
+
+		/**
+		 * Allow ignoring this form submission via callback
+		 * No use in checking if it will open in a new tab anyway
+		 */
+		if (!opensInNewTab && this.swup.shouldIgnoreVisit(action, { el: form, event })) {
+			return;
+		}
 
 		/**
 		 * Always trigger the submitForm event,
@@ -71,28 +86,28 @@ export default class FormPlugin extends Plugin {
 		 */
 		swup.triggerEvent('submitForm', event);
 
-		const form = event.target;
+		/**
+		 * Open the form in a new tab because of its target attribute
+		 */
+		if (opensInNewTabFromTargetAttr) {
+			swup.triggerEvent('openFormSubmitInNewTab', event);
+			return;
+		}
 
 		/**
 		 * Open the form in a new tab if either Command (Mac), Control (Windows) or Shift is pressed.
 		 * Normalizes behavior across browsers.
 		 */
-		if (this.isSpecialKeyPressed()) {
+		if (opensInNewTabFromKeyPress) {
 			this.resetSpecialKeys();
 
 			swup.triggerEvent('openFormSubmitInNewTab', event);
 
-			const previousFormTarget = form.getAttribute('target');
-
+			form.dataset.swupOriginalFormTarget = form.getAttribute('target') || '';
 			form.setAttribute('target', '_blank');
-
 			form.addEventListener(
 				'submit',
-				(event) => {
-					requestAnimationFrame(() => {
-						this.restorePreviousFormTarget(event.target, previousFormTarget);
-					});
-				},
+				() => requestAnimationFrame(() => this.restorePreviousFormTarget(form)),
 				{ once: true }
 			);
 
@@ -107,9 +122,9 @@ export default class FormPlugin extends Plugin {
 	 * @param {HTMLFormElement} form
 	 * @returns {void}
 	 */
-	restorePreviousFormTarget(form, previousTarget) {
-		if (previousTarget) {
-			form.setAttribute('target', previousTarget);
+	restorePreviousFormTarget(form) {
+		if (form.dataset.swupOriginalFormTarget) {
+			form.setAttribute('target', form.dataset.swupOriginalFormTarget);
 		} else {
 			form.removeAttribute('target');
 		}
