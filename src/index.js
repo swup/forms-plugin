@@ -1,8 +1,8 @@
 import Plugin from '@swup/plugin';
 import { Location, getCurrentUrl } from 'swup';
 
-export default class FormPlugin extends Plugin {
-	name = 'FormsPlugin';
+export default class SwupFormsPlugin extends Plugin {
+	name = 'SwupFormsPlugin';
 
 	requires = { swup: '>=3.0.0' };
 
