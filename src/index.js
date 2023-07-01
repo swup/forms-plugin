@@ -65,7 +65,7 @@ export default class SwupFormsPlugin extends Plugin {
 		 * Allow ignoring this form submission via callback
 		 * No use in checking if it will open in a new tab anyway
 		 */
-		if (!opensInNewTab && this.swup.shouldIgnoreVisit(action, { el: form, event })) {
+		if (!opensInNewTab && swup.shouldIgnoreVisit(action, { el: form, event })) {
 			return;
 		}
 
@@ -125,30 +125,36 @@ export default class SwupFormsPlugin extends Plugin {
 	 * @returns {void}
 	 */
 	submitForm(event) {
-		const swup = this.swup;
-
 		event.preventDefault();
 
-		const form = event.target;
-		const data = new FormData(form);
-		const action = form.getAttribute('action') || getCurrentUrl();
-		const method = (form.getAttribute('method') || 'get').toUpperCase();
-		const customTransition = form.getAttribute('data-swup-transition');
-
-		let { url, hash } = Location.fromUrl(action);
-
-		if (hash) {
-			swup.scrollToElement = hash;
-		}
+		const el = event.target;
+		const { url, hash, method, data, body, transition } = this.getFormInfo(el);
 
 		if (method === 'GET') {
 			url = this.appendQueryParams(url, data);
-			swup.loadPage({ url, customTransition });
 			this.swup.cache.delete(url);
+			this.swup.loadPage(url + hash, { transition }, { el, event });
 		} else {
-			swup.loadPage({ url, method, data, customTransition });
 			this.swup.cache.delete(url);
+			this.swup.loadPage(url + hash, { method, body, transition }, { el, event });
 		}
+	}
+
+	getFormInfo(form) {
+		const action = form.getAttribute('action') || getCurrentUrl();
+		const { url, hash } = Location.fromUrl(action);
+		const method = (form.getAttribute('method') || 'get').toUpperCase();
+		const encoding = (
+			form.getAttribute('enctype') || 'application/x-www-form-urlencoded'
+		).toLowerCase();
+		const multipart = encoding === 'multipart/form-data';
+		const transition = form.getAttribute('data-swup-transition');
+		const data = new FormData(form);
+		let body = data;
+		if (!multipart) {
+			body = new URLSearchParams(data);
+		}
+		return { url, hash, method, data, body, encoding, transition };
 	}
 
 	/**
