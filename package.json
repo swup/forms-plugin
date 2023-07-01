@@ -2,7 +2,7 @@
   "name": "@swup/forms-plugin",
   "amdName": "SwupFormsPlugin",
   "version": "2.0.1",
-  "description": "Swup forms plugin - adds support for forms.",
+  "description": "A swup plugin for submitting forms",
   "type": "module",
   "source": "src/index.js",
   "main": "./dist/index.cjs",
