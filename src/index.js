@@ -4,7 +4,7 @@ import { Location, getCurrentUrl } from 'swup';
 export default class SwupFormsPlugin extends Plugin {
 	name = 'SwupFormsPlugin';
 
-	requires = { swup: '>=4.0.0' };
+	requires = { swup: '>=4' };
 
 	defaults = {
 		formSelector: 'form[data-swup-form]'

@@ -8,7 +8,6 @@ Set a custom transition name using the `data-swup-transition` attribute on the f
 
 The action, method and encoding type attributes set on the form are respected. The server response must be a valid page with all containers to be replaced by swup.
 
-
 **Note:** This plugin is appropriate for simple use cases like search inputs or
 contact forms. For more complex requirements involving file uploads or custom
 serialization, it is recommended to use the swup API directly.
