@@ -23,15 +23,12 @@ export default class SwupFormsPlugin extends Plugin {
 	}
 
 	mount() {
-		const swup = this.swup;
-
-		// add empty handlers array for submitForm event
-		swup._handlers.submitForm = [];
-		swup._handlers.openFormSubmitInNewTab = [];
+		this.swup.hooks.create('submitForm');
+		this.swup.hooks.create('openFormSubmitInNewTab');
 
 		// Register the submit handler. Using `capture:true` to be
 		// able to set the form's target attribute on the fly.
-		swup.delegatedListeners.formSubmit = swup.delegateEvent(
+		this.formSubmitDelegate = this.swup.delegateEvent(
 			this.options.formSelector,
 			'submit',
 			this.beforeFormSubmit.bind(this),
@@ -45,9 +42,7 @@ export default class SwupFormsPlugin extends Plugin {
 	}
 
 	unmount() {
-		const swup = this.swup;
-
-		swup.delegatedListeners.formSubmit.destroy();
+		this.formSubmitDelegate.destroy();
 
 		document.removeEventListener('keydown', this.onKeyDown);
 		document.removeEventListener('keyup', this.onKeyUp);
@@ -78,13 +73,13 @@ export default class SwupFormsPlugin extends Plugin {
 		 * Always trigger the submitForm event,
 		 * allowing it to be `defaultPrevented`
 		 */
-		swup.triggerEvent('submitForm', event);
+		swup.hooks.triggerSync('submitForm', { form, event });
 
 		/**
 		 * Open the form in a new tab because of its target attribute
 		 */
 		if (opensInNewTabFromTargetAttr) {
-			swup.triggerEvent('openFormSubmitInNewTab', event);
+			swup.hooks.triggerSync('openFormSubmitInNewTab', { form, event });
 			return;
 		}
 
@@ -95,7 +90,7 @@ export default class SwupFormsPlugin extends Plugin {
 		if (opensInNewTabFromKeyPress) {
 			this.resetSpecialKeys();
 
-			swup.triggerEvent('openFormSubmitInNewTab', event);
+			swup.hooks.triggerSync('openFormSubmitInNewTab', { form, event });
 
 			form.dataset.swupOriginalFormTarget = form.getAttribute('target') || '';
 			form.setAttribute('target', '_blank');
