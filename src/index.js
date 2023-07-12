@@ -23,8 +23,8 @@ export default class SwupFormsPlugin extends Plugin {
 	}
 
 	mount() {
-		this.swup.hooks.create('submitForm');
-		this.swup.hooks.create('openFormSubmitInNewTab');
+		this.swup.hooks.create('form:submit');
+		this.swup.hooks.create('form:submit:newtab');
 
 		// Register the submit handler. Using `capture:true` to be
 		// able to set the form's target attribute on the fly.
@@ -70,16 +70,15 @@ export default class SwupFormsPlugin extends Plugin {
 		}
 
 		/**
-		 * Always trigger the submitForm event,
-		 * allowing it to be `defaultPrevented`
+		 * Always trigger the form:submit hook, allowing it to be `defaultPrevented`
 		 */
-		swup.hooks.triggerSync('submitForm', { form, event });
+		swup.hooks.triggerSync('form:submit', { form, event });
 
 		/**
 		 * Open the form in a new tab because of its target attribute
 		 */
 		if (opensInNewTabFromTargetAttr) {
-			swup.hooks.triggerSync('openFormSubmitInNewTab', { form, event });
+			swup.hooks.triggerSync('form:submit:newtab', { form, event });
 			return;
 		}
 
@@ -90,7 +89,7 @@ export default class SwupFormsPlugin extends Plugin {
 		if (opensInNewTabFromKeyPress) {
 			this.resetSpecialKeys();
 
-			swup.hooks.triggerSync('openFormSubmitInNewTab', { form, event });
+			swup.hooks.triggerSync('form:submit:newtab', { form, event });
 
 			form.dataset.swupOriginalFormTarget = form.getAttribute('target') || '';
 			form.setAttribute('target', '_blank');

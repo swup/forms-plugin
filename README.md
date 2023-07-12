@@ -57,17 +57,17 @@ new SwupFormsPlugin({
 
 The plugin adds two new hooks to swup.
 
-### `submitForm`
+### `form:submit`
 
 Triggered when a form is submitted.
 
 ```js
-swup.hooks.on('submitForm', (context, { form, event }) => {
+swup.hooks.on('form:submit', (context, { form, event }) => {
   console.log(form);
 });
 ```
 
-### `openFormSubmitInNewTab`
+### `form:submit:newtab`
 
 Triggered when a form is submitted to a new tab or window. This will happen if the user
 has pressed either the `Command` (Mac), `Control` (Windows) or `Shift` key while submitting
