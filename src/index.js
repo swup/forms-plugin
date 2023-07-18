@@ -127,15 +127,15 @@ export default class SwupFormsPlugin extends Plugin {
 		event.preventDefault();
 
 		const el = event.target;
-		const { url, hash, method, data, body, transition } = this.getFormInfo(el);
+		const { url, hash, method, data, body } = this.getFormInfo(el);
 
 		if (method === 'GET') {
 			url = this.appendQueryParams(url, data);
 			this.swup.cache.delete(url);
-			this.swup.loadPage(url + hash, { transition }, { el, event });
+			this.swup.visit(url + hash, {}, { el, event });
 		} else {
 			this.swup.cache.delete(url);
-			this.swup.loadPage(url + hash, { method, body, transition }, { el, event });
+			this.swup.visit(url + hash, { method, body }, { el, event });
 		}
 	}
 
@@ -147,13 +147,12 @@ export default class SwupFormsPlugin extends Plugin {
 			form.getAttribute('enctype') || 'application/x-www-form-urlencoded'
 		).toLowerCase();
 		const multipart = encoding === 'multipart/form-data';
-		const transition = form.getAttribute('data-swup-transition');
 		const data = new FormData(form);
 		let body = data;
 		if (!multipart) {
 			body = new URLSearchParams(data);
 		}
-		return { url, hash, method, data, body, encoding, transition };
+		return { url, hash, method, data, body, encoding };
 	}
 
 	/**
