@@ -4,7 +4,7 @@ A [swup](https://swup.js.org) plugin for submitting forms.
 
 Forms with a `data-swup-form` attribute will be serialized and submitted by swup,
 including page transitions just like normal link clicks.
-Set a custom transition name using the `data-swup-transition` attribute on the form element.
+Set a custom transition name using the `data-swup-animation` attribute on the form element.
 
 The action, method and encoding type attributes set on the form are respected. The server response must be a valid page with all containers to be replaced by swup.
 
