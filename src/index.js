@@ -72,13 +72,13 @@ export default class SwupFormsPlugin extends Plugin {
 		/**
 		 * Always trigger the form:submit hook, allowing it to be `defaultPrevented`
 		 */
-		swup.hooks.triggerSync('form:submit', { form, event });
+		swup.hooks.callSync('form:submit', { form, event });
 
 		/**
 		 * Open the form in a new tab because of its target attribute
 		 */
 		if (opensInNewTabFromTargetAttr) {
-			swup.hooks.triggerSync('form:submit:newtab', { form, event });
+			swup.hooks.callSync('form:submit:newtab', { form, event });
 			return;
 		}
 
@@ -89,7 +89,7 @@ export default class SwupFormsPlugin extends Plugin {
 		if (opensInNewTabFromKeyPress) {
 			this.resetSpecialKeys();
 
-			swup.hooks.triggerSync('form:submit:newtab', { form, event });
+			swup.hooks.callSync('form:submit:newtab', { form, event });
 
 			form.dataset.swupOriginalFormTarget = form.getAttribute('target') || '';
 			form.setAttribute('target', '_blank');
@@ -132,10 +132,10 @@ export default class SwupFormsPlugin extends Plugin {
 		if (method === 'GET') {
 			url = this.appendQueryParams(url, data);
 			this.swup.cache.delete(url);
-			this.swup.visit(url + hash, {}, { el, event });
+			this.swup.navigate(url + hash, {}, { el, event });
 		} else {
 			this.swup.cache.delete(url);
-			this.swup.visit(url + hash, { method, body }, { el, event });
+			this.swup.navigate(url + hash, { method, body }, { el, event });
 		}
 	}
 
