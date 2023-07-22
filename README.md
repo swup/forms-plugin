@@ -2,14 +2,12 @@
 
 A [swup](https://swup.js.org) plugin for submitting forms.
 
-Forms with a `data-swup-form` attribute will be serialized and submitted by swup,
-including page transitions just like normal link clicks.
-Set a custom transition name using the `data-swup-animation` attribute on the form element.
+- Serialize and submit forms with animated page transitions
+- Opt-in with a configurable selector, by default `form[data-swup-form]`
+- Respects custom animations set on the form element
 
-The action, method and encoding type attributes set on the form are respected. The server response must be a valid page with all containers to be replaced by swup.
-
-**Note:** This plugin is appropriate for simple use cases like search inputs or
-contact forms. For more complex requirements involving file uploads or custom
+**Note:** This plugin is perfect for simple scenarios like search or
+contact forms. For complex requirements like file uploads or custom
 serialization, it is recommended to use the swup API directly.
 
 ## Installation
@@ -38,6 +36,21 @@ To run this plugin, include an instance in the swup options.
 const swup = new Swup({
   plugins: [new SwupFormsPlugin()]
 });
+```
+
+## Server response
+
+Action, method and encoding type attributes set on the form are respected.
+
+The server response must be a valid page with all containers to be replaced by swup.
+
+## Custom animations
+
+The plugin respects custom animations set on the form using the `data-swup-animation` attribute:
+
+```html
+<!-- Animate with an 'overlay' custom animation -->
+<form action="/" data-swup-form data-swup-animation="overlay">
 ```
 
 ## Options
@@ -72,10 +85,3 @@ swup.hooks.on('form:submit', (context, { form, event }) => {
 Triggered when a form is submitted to a new tab or window. This will happen if the user
 has pressed either the `Command` (Mac), `Control` (Windows) or `Shift` key while submitting
 the form. The plugin normalizes that behavior across browsers.
-
-## Browser support
-
-Form submissions are serialized using the
-[URLSearchParams](https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams)
-browser API. If you need to support older browsers such as IE 11, you should add
-a [polyfill](https://github.com/ungap/url-search-params).
