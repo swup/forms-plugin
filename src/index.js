@@ -129,7 +129,7 @@ export default class SwupFormsPlugin extends Plugin {
 
 		switch (method) {
 			case 'POST':
-				params = { body };
+				params = { method, body };
 				break;
 			case 'GET':
 				action = this.appendQueryParams(action, data);
