@@ -82,8 +82,6 @@ export default class SwupFormsPlugin extends Plugin {
 		 * Normalizes behavior across browsers.
 		 */
 		if (opensInNewTabFromKeyPress) {
-			this.resetSpecialKeys();
-
 			swup.hooks.callSync('form:submit:newtab', { el: form, event });
 
 			form.dataset.swupOriginalFormTarget = form.getAttribute('target') || '';
