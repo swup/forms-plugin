@@ -162,9 +162,9 @@ export default class SwupFormsPlugin extends Plugin {
 	 * @returns {string}
 	 */
 	appendQueryParams(url, formData) {
-		url = url.split('?')[0];
+		const path = url.split('?')[0];
 		const query = new URLSearchParams(formData).toString();
-		return query ? `${url}?${query}` : url;
+		return query ? `${path}?${query}` : path;
 	}
 
 	/**
