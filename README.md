@@ -75,8 +75,8 @@ The plugin adds two new hooks to swup.
 Triggered when a form is submitted.
 
 ```js
-swup.hooks.on('form:submit', (context, { form, event }) => {
-  console.log(form);
+swup.hooks.on('form:submit', (visit, { el, event }) => {
+  console.log(el);
 });
 ```
 
