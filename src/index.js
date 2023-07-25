@@ -124,19 +124,26 @@ export default class SwupFormsPlugin extends Plugin {
 	 * @returns {void}
 	 */
 	submitForm(event) {
-		event.preventDefault();
-
 		const el = event.target;
 		const { url, hash, method, data, body } = this.getFormInfo(el);
+		let action = url;
+		let params = { method };
 
-		if (method === 'GET') {
-			url = this.appendQueryParams(url, data);
-			this.swup.cache.delete(url);
-			this.swup.navigate(url + hash, {}, { el, event });
-		} else {
-			this.swup.cache.delete(url);
-			this.swup.navigate(url + hash, { method, body }, { el, event });
+		switch (method) {
+			case 'POST':
+				params = { body };
+				break;
+			case 'GET':
+				action = this.appendQueryParams(action, data);
+				break;
+			default:
+				console.warn(`Unsupported form method: ${method}`);
+				return;
 		}
+
+		event.preventDefault();
+		this.swup.cache.delete(action);
+		this.swup.navigate(action + hash, params, { el, event });
 	}
 
 	getFormInfo(form) {
