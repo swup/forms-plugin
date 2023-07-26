@@ -1,41 +1,34 @@
 import Plugin from '@swup/plugin';
 import { Location, getCurrentUrl } from 'swup';
 
-export default class FormPlugin extends Plugin {
-	name = 'FormsPlugin';
+export default class SwupFormsPlugin extends Plugin {
+	name = 'SwupFormsPlugin';
 
-	constructor(options) {
+	requires = { swup: '>=4' };
+
+	defaults = {
+		formSelector: 'form[data-swup-form]'
+	};
+
+	// Track pressed keys to detect form submissions to a new tab
+	specialKeys = {
+		Meta: false,
+		Control: false,
+		Shift: false
+	};
+
+	constructor(options = {}) {
 		super();
-
-		const defaultOptions = {
-			formSelector: 'form[data-swup-form]'
-		};
-
-		this.options = {
-			...defaultOptions,
-			...options
-		};
-
-		/**
-		 * Helps detecting form submits to a new tab
-		 */
-		this.specialKeys = {
-			Meta: false,
-			Control: false,
-			Shift: false
-		};
+		this.options = { ...this.defaults, ...options };
 	}
 
 	mount() {
-		const swup = this.swup;
-
-		// add empty handlers array for submitForm event
-		swup._handlers.submitForm = [];
-		swup._handlers.openFormSubmitInNewTab = [];
+		this.swup.hooks.create('form:submit');
+		this.swup.hooks.create('form:submit:newtab');
 
 		// Register the submit handler. Using `capture:true` to be
 		// able to set the form's target attribute on the fly.
-		swup.delegatedListeners.formSubmit = swup.delegateEvent(
+		this.formSubmitDelegate = this.swup.delegateEvent(
 			this.options.formSelector,
 			'submit',
 			this.beforeFormSubmit.bind(this),
@@ -49,9 +42,7 @@ export default class FormPlugin extends Plugin {
 	}
 
 	unmount() {
-		const swup = this.swup;
-
-		swup.delegatedListeners.formSubmit.destroy();
+		this.formSubmitDelegate.destroy();
 
 		document.removeEventListener('keydown', this.onKeyDown);
 		document.removeEventListener('keyup', this.onKeyUp);
@@ -64,42 +55,52 @@ export default class FormPlugin extends Plugin {
 	 */
 	beforeFormSubmit(event) {
 		const swup = this.swup;
+		const form = event.target;
+		const action = form.getAttribute('action') || getCurrentUrl();
+		const opensInNewTabFromKeyPress = this.isSpecialKeyPressed();
+		const opensInNewTabFromTargetAttr = form.getAttribute('target') === '_blank';
+		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
 
 		/**
-		 * Always trigger the submitForm event,
-		 * allowing it to be `defaultPrevented`
+		 * Allow ignoring this form submission via callback
+		 * No use in checking if it will open in a new tab anyway
 		 */
-		swup.triggerEvent('submitForm', event);
+		if (!opensInNewTab && swup.shouldIgnoreVisit(action, { el: form, event })) {
+			return;
+		}
 
-		const form = event.target;
+		/**
+		 * Open the form in a new tab because of its target attribute
+		 */
+		if (opensInNewTabFromTargetAttr) {
+			swup.hooks.callSync('form:submit:newtab', { el: form, event });
+			return;
+		}
 
 		/**
 		 * Open the form in a new tab if either Command (Mac), Control (Windows) or Shift is pressed.
 		 * Normalizes behavior across browsers.
 		 */
-		if (this.isSpecialKeyPressed()) {
-			this.resetSpecialKeys();
+		if (opensInNewTabFromKeyPress) {
+			swup.hooks.callSync('form:submit:newtab', { el: form, event });
 
-			swup.triggerEvent('openFormSubmitInNewTab', event);
-
-			const previousFormTarget = form.getAttribute('target');
-
+			form.dataset.swupOriginalFormTarget = form.getAttribute('target') || '';
 			form.setAttribute('target', '_blank');
-
 			form.addEventListener(
 				'submit',
-				(event) => {
-					requestAnimationFrame(() => {
-						this.restorePreviousFormTarget(event.target, previousFormTarget);
-					});
-				},
+				() => requestAnimationFrame(() => this.restorePreviousFormTarget(form)),
 				{ once: true }
 			);
 
 			return;
 		}
 
-		this.submitForm(event);
+		/**
+		 * Trigger the form:submit hook.
+		 */
+		swup.hooks.callSync('form:submit', { el: form, event }, () => {
+			this.submitForm(event);
+		});
 	}
 
 	/**
@@ -107,9 +108,9 @@ export default class FormPlugin extends Plugin {
 	 * @param {HTMLFormElement} form
 	 * @returns {void}
 	 */
-	restorePreviousFormTarget(form, previousTarget) {
-		if (previousTarget) {
-			form.setAttribute('target', previousTarget);
+	restorePreviousFormTarget(form) {
+		if (form.dataset.swupOriginalFormTarget) {
+			form.setAttribute('target', form.dataset.swupOriginalFormTarget);
 		} else {
 			form.removeAttribute('target');
 		}
@@ -121,30 +122,42 @@ export default class FormPlugin extends Plugin {
 	 * @returns {void}
 	 */
 	submitForm(event) {
-		const swup = this.swup;
+		const el = event.target;
+		const { url, hash, method, data, body } = this.getFormInfo(el);
+		let action = url;
+		let params = { method };
+
+		switch (method) {
+			case 'POST':
+				params = { method, body };
+				break;
+			case 'GET':
+				action = this.appendQueryParams(action, data);
+				break;
+			default:
+				console.warn(`Unsupported form method: ${method}`);
+				return;
+		}
 
 		event.preventDefault();
+		this.swup.cache.delete(action);
+		this.swup.navigate(action + hash, params, { el, event });
+	}
 
-		const form = event.target;
-		const data = new FormData(form);
+	getFormInfo(form) {
 		const action = form.getAttribute('action') || getCurrentUrl();
+		const { url, hash } = Location.fromUrl(action);
 		const method = (form.getAttribute('method') || 'get').toUpperCase();
-		const customTransition = form.getAttribute('data-swup-transition');
-
-		let { url, hash } = Location.fromUrl(action);
-
-		if (hash) {
-			swup.scrollToElement = hash;
+		const encoding = (
+			form.getAttribute('enctype') || 'application/x-www-form-urlencoded'
+		).toLowerCase();
+		const multipart = encoding === 'multipart/form-data';
+		const data = new FormData(form);
+		let body = data;
+		if (!multipart) {
+			body = new URLSearchParams(data);
 		}
-
-		if (method === 'GET') {
-			url = this.appendQueryParams(url, data);
-			swup.cache.remove(url);
-			swup.loadPage({ url, customTransition });
-		} else {
-			swup.cache.remove(url);
-			swup.loadPage({ url, method, data, customTransition });
-		}
+		return { url, hash, method, data, body, encoding };
 	}
 
 	/**
@@ -154,9 +167,9 @@ export default class FormPlugin extends Plugin {
 	 * @returns {string}
 	 */
 	appendQueryParams(url, formData) {
-		url = url.split('?')[0];
+		const path = url.split('?')[0];
 		const query = new URLSearchParams(formData).toString();
-		return query ? `${url}?${query}` : url;
+		return query ? `${path}?${query}` : path;
 	}
 
 	/**
