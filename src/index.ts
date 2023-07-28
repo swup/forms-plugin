@@ -4,12 +4,12 @@ import type { DelegateEvent, DelegateEventUnsubscribe } from 'swup';
 
 declare module 'swup' {
 	export interface HookDefinitions {
-		'form:submit': { el: Element; event: DelegatedSubmitEvent };
-		'form:submit:newtab': { el: Element; event: DelegatedSubmitEvent };
+		'form:submit': { el: HTMLFormElement; event: DelegatedSubmitEvent };
+		'form:submit:newtab': { el: HTMLFormElement; event: DelegatedSubmitEvent };
 	}
 }
 
-type DelegatedSubmitEvent = DelegateEvent<SubmitEvent, Element>;
+type DelegatedSubmitEvent = DelegateEvent<SubmitEvent, HTMLFormElement>;
 
 type Options = {
 	formSelector: string;
