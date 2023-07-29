@@ -1,23 +1,49 @@
 import Plugin from '@swup/plugin';
 import { Location, getCurrentUrl } from 'swup';
+import type { DelegateEvent, DelegateEventUnsubscribe } from 'swup';
+
+declare module 'swup' {
+	export interface HookDefinitions {
+		'form:submit': { el: HTMLFormElement; event: DelegatedSubmitEvent };
+		'form:submit:newtab': { el: HTMLFormElement; event: DelegatedSubmitEvent };
+	}
+}
+
+type DelegatedSubmitEvent = DelegateEvent<SubmitEvent, HTMLFormElement>;
+
+type Options = {
+	formSelector: string;
+};
+
+type FormInfo = {
+	url: string;
+	hash: string;
+	method: 'GET' | 'POST';
+	data: FormData;
+	body: URLSearchParams | FormData;
+	encoding: string;
+};
 
 export default class SwupFormsPlugin extends Plugin {
 	name = 'SwupFormsPlugin';
 
 	requires = { swup: '>=4' };
 
-	defaults = {
+	defaults: Options = {
 		formSelector: 'form[data-swup-form]'
 	};
+	options: Options;
 
 	// Track pressed keys to detect form submissions to a new tab
-	specialKeys = {
+	specialKeys: { [key: string]: boolean } = {
 		Meta: false,
 		Control: false,
 		Shift: false
 	};
 
-	constructor(options = {}) {
+	formSubmitDelegate?: DelegateEventUnsubscribe;
+
+	constructor(options: Partial<Options> = {}) {
 		super();
 		this.options = { ...this.defaults, ...options };
 	}
@@ -42,7 +68,7 @@ export default class SwupFormsPlugin extends Plugin {
 	}
 
 	unmount() {
-		this.formSubmitDelegate.destroy();
+		this.formSubmitDelegate?.destroy();
 
 		document.removeEventListener('keydown', this.onKeyDown);
 		document.removeEventListener('keyup', this.onKeyUp);
@@ -50,12 +76,10 @@ export default class SwupFormsPlugin extends Plugin {
 
 	/**
 	 * Handles form 'submit' events during the capture phase
-	 * @param {SubmitEvent} event
-	 * @returns {void}
 	 */
-	beforeFormSubmit(event) {
+	beforeFormSubmit(event: DelegatedSubmitEvent): void {
 		const swup = this.swup;
-		const form = event.target;
+		const form = event.delegateTarget;
 		const action = form.getAttribute('action') || getCurrentUrl();
 		const opensInNewTabFromKeyPress = this.isSpecialKeyPressed();
 		const opensInNewTabFromTargetAttr = form.getAttribute('target') === '_blank';
@@ -105,10 +129,8 @@ export default class SwupFormsPlugin extends Plugin {
 
 	/**
 	 * Restores the previous form target if available
-	 * @param {HTMLFormElement} form
-	 * @returns {void}
 	 */
-	restorePreviousFormTarget(form) {
+	restorePreviousFormTarget(form: HTMLFormElement): void {
 		if (form.dataset.swupOriginalFormTarget) {
 			form.setAttribute('target', form.dataset.swupOriginalFormTarget);
 		} else {
@@ -118,14 +140,12 @@ export default class SwupFormsPlugin extends Plugin {
 
 	/**
 	 * Submits a form through swup
-	 * @param {SubmitEvent} event
-	 * @returns {void}
 	 */
-	submitForm(event) {
-		const el = event.target;
+	submitForm(event: DelegatedSubmitEvent): void {
+		const el = event.delegateTarget;
 		const { url, hash, method, data, body } = this.getFormInfo(el);
 		let action = url;
-		let params = { method };
+		let params: { method: 'GET' | 'POST'; body?: FormData | URLSearchParams } = { method };
 
 		switch (method) {
 			case 'POST':
@@ -144,39 +164,38 @@ export default class SwupFormsPlugin extends Plugin {
 		this.swup.navigate(action + hash, params, { el, event });
 	}
 
-	getFormInfo(form) {
+	/**
+	 * Get information about where and how a form will submit
+	 */
+	getFormInfo(form: HTMLFormElement): FormInfo {
 		const action = form.getAttribute('action') || getCurrentUrl();
 		const { url, hash } = Location.fromUrl(action);
-		const method = (form.getAttribute('method') || 'get').toUpperCase();
+		const method = (form.getAttribute('method') || 'get').toUpperCase() as 'GET' | 'POST';
 		const encoding = (
 			form.getAttribute('enctype') || 'application/x-www-form-urlencoded'
 		).toLowerCase();
 		const multipart = encoding === 'multipart/form-data';
 		const data = new FormData(form);
-		let body = data;
+		let body: FormData | URLSearchParams = data;
 		if (!multipart) {
-			body = new URLSearchParams(data);
+			body = new URLSearchParams(data as unknown as Record<string, string>);
 		}
 		return { url, hash, method, data, body, encoding };
 	}
 
 	/**
 	 * Appends query parameters to a URL
-	 * @param {string} url
-	 * @param {FormData} formData
-	 * @returns {string}
 	 */
-	appendQueryParams(url, formData) {
+	appendQueryParams(url: string, data: FormData): string {
 		const path = url.split('?')[0];
-		const query = new URLSearchParams(formData).toString();
+		const query = new URLSearchParams(data as unknown as Record<string, string>).toString();
 		return query ? `${path}?${query}` : path;
 	}
 
 	/**
 	 * Is either command or control key down at the moment
-	 * @returns {boolean}
 	 */
-	isSpecialKeyPressed() {
+	isSpecialKeyPressed(): boolean {
 		return Object.values(this.specialKeys).some((value) => value);
 	}
 
@@ -184,28 +203,26 @@ export default class SwupFormsPlugin extends Plugin {
 	 * Reset all entries in `specialKeys` to false
 	 */
 	resetSpecialKeys() {
-		for (const [key, value] of Object.entries(this.specialKeys)) {
+		for (const key of Object.keys(this.specialKeys)) {
 			this.specialKeys[key] = false;
 		}
 	}
 
 	/**
 	 * Adjust `specialKeys` on keyDown
-	 * @param {KeyboardEvent} e
-	 * @returns {void}
 	 */
-	onKeyDown = (e) => {
-		if (!this.specialKeys.hasOwnProperty(e.key)) return;
-		this.specialKeys[e.key] = true;
+	onKeyDown = (event: KeyboardEvent): void => {
+		if (this.specialKeys.hasOwnProperty(event.key)) {
+			this.specialKeys[event.key] = true;
+		}
 	};
 
 	/**
 	 * Adjust `specialKeys` on keyUp
-	 * @param {KeyboardEvent} e
-	 * @returns {void}
 	 */
-	onKeyUp = (e) => {
-		if (!this.specialKeys.hasOwnProperty(e.key)) return;
-		this.specialKeys[e.key] = false;
+	onKeyUp = (event: KeyboardEvent): void => {
+		if (this.specialKeys.hasOwnProperty(event.key)) {
+			this.specialKeys[event.key] = false;
+		}
 	};
 }
