@@ -2,6 +2,10 @@
 
 <!-- ## [Unreleased] -->
 
+## [3.1.1] - 2023-08-09
+
+- Fix toplevel `"types"` export
+
 ## [3.1.0] - 2023-07-29
 
 - Port to TypeScript
@@ -32,8 +36,9 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/swup/forms-plugin/compare/3.1.0...HEAD
+[Unreleased]: https://github.com/swup/forms-plugin/compare/3.1.1...HEAD
 
+[3.1.1]: https://github.com/swup/forms-plugin/releases/tag/3.1.1
 [3.1.0]: https://github.com/swup/forms-plugin/releases/tag/3.1.0
 [3.0.0]: https://github.com/swup/forms-plugin/releases/tag/3.0.0
 [2.0.0]: https://github.com/swup/forms-plugin/releases/tag/2.0.0
