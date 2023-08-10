@@ -1,6 +1,6 @@
 import Plugin from '@swup/plugin';
 import { Location, getCurrentUrl } from 'swup';
-import type { DelegateEvent, DelegateEventUnsubscribe } from 'swup';
+import type { DelegateEvent, DelegateEventUnsubscribe, Handler } from 'swup';
 
 declare module 'swup' {
 	export interface HookDefinitions {
@@ -13,6 +13,7 @@ type DelegatedSubmitEvent = DelegateEvent<SubmitEvent, HTMLFormElement>;
 
 type Options = {
 	formSelector: string;
+	inlineFormSelector: string;
 };
 
 type FormInfo = {
@@ -30,7 +31,8 @@ export default class SwupFormsPlugin extends Plugin {
 	requires = { swup: '>=4' };
 
 	defaults: Options = {
-		formSelector: 'form[data-swup-form]'
+		formSelector: 'form[data-swup-form]',
+		inlineFormSelector: 'form[data-swup-inline-form]'
 	};
 	options: Options;
 
@@ -62,6 +64,8 @@ export default class SwupFormsPlugin extends Plugin {
 				capture: true
 			}
 		);
+
+		this.on('visit:start', this.handleInlineForms, { priority: 1 });
 
 		document.addEventListener('keydown', this.onKeyDown);
 		document.addEventListener('keyup', this.onKeyUp);
@@ -224,5 +228,24 @@ export default class SwupFormsPlugin extends Plugin {
 		if (this.specialKeys.hasOwnProperty(event.key)) {
 			this.specialKeys[event.key] = false;
 		}
+	};
+
+	/**
+	 * Handles visits triggered by forms matching [data-swup-inline-form]
+	 */
+	handleInlineForms: Handler<'visit:start'> = (visit) => {
+		const { el } = visit.trigger;
+		if (!el?.matches(this.options.inlineFormSelector)) return;
+
+		if (!el.id) {
+			console.error(`[@swup/forms-plugin] inline forms must have an id attribute:`, el);
+			return;
+		}
+
+		const selector = `#${el.id}`;
+		visit.containers = [selector];
+		visit.animation.scope = 'containers';
+		visit.animation.selector = selector;
+		visit.scroll.target = selector;
 	};
 }

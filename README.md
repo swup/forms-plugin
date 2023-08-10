@@ -66,6 +66,34 @@ new SwupFormsPlugin({
 });
 ```
 
+## Inline Forms
+
+If you give a form an additional attribute `[data-swup-inline-form]`, swup will:
+
+- update only that form when being submitted, ignoring the default `containers`.
+- scroll back to the beginning of the form
+- scope animations to the form itself
+
+> **Note** If you mark a form as an inline form, the form **must have an `id` attribute**
+
+### Example
+
+**HTML**
+```html
+<form id="form-1" class="transition-form" data-swup-form data-swup-inline-form method="POST">
+  <input name="test"></input> <input type="submit"></input>
+</form>
+```
+**CSS**
+```css
+.transition-form.is-changing {
+  transition: opacity 200ms;
+}
+.transition-form.is-animating {
+  opacity: 0;
+}
+```
+
 ## Hooks
 
 The plugin adds two new hooks to swup.
