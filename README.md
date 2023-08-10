@@ -60,9 +60,16 @@ The plugin respects custom animations set on the form using the `data-swup-anima
 The `formSelector` option defines a selector for forms which should be sent via
 swup. By default, any form with a `data-swup-form` attribute is selected.
 
+### inlineFormSelector
+
+Customize the selector for [inline forms](#inline-forms)
+
+### Default Options
+
 ```javascript
 new SwupFormsPlugin({
-  formSelector: 'form[data-swup-form]'
+  formSelector: 'form[data-swup-form]',
+  inlineFormSelector: 'form[data-swup-inline-form]'
 });
 ```
 
