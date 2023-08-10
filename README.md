@@ -52,20 +52,6 @@ The plugin respects custom animations set on the form using the `data-swup-anima
 <!-- Animate with an 'overlay' custom animation -->
 <form action="/" data-swup-form data-swup-animation="overlay">
 ```
-
-## Options
-
-### formSelector
-
-The `formSelector` option defines a selector for forms which should be sent via
-swup. By default, any form with a `data-swup-form` attribute is selected.
-
-```javascript
-new SwupFormsPlugin({
-  formSelector: 'form[data-swup-form]'
-});
-```
-
 ## Inline Forms
 
 If you give a form an additional attribute `[data-swup-inline-form]`, swup will:
@@ -92,6 +78,26 @@ If you give a form an additional attribute `[data-swup-inline-form]`, swup will:
 .transition-form.is-animating {
   opacity: 0;
 }
+```
+
+## Options
+
+### formSelector
+
+The `formSelector` option defines a selector for forms which should be sent via
+swup. By default, any form with a `data-swup-form` attribute is selected.
+
+### inlineFormSelector
+
+Customize the selector for [inline forms](#inline-forms)
+
+### Default Options
+
+```javascript
+new SwupFormsPlugin({
+  formSelector: 'form[data-swup-form]',
+  inlineFormSelector: 'form[data-swup-inline-form]'
+});
 ```
 
 ## Hooks
