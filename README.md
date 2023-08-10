@@ -80,16 +80,16 @@ If you give a form an additional attribute `[data-swup-inline-form]`, swup will:
 
 **HTML**
 ```html
-<form id="form-1" data-swup-form data-swup-inline-form method="POST">
+<form id="form-1" class="transition-form" data-swup-form data-swup-inline-form method="POST">
   <input name="test"></input> <input type="submit"></input>
 </form>
 ```
 **CSS**
 ```css
-#form-1.is-changing {
+.transition-form.is-changing {
   transition: opacity 200ms;
 }
-#form-1.is-animating {
+.transition-form.is-animating {
   opacity: 0;
 }
 ```
