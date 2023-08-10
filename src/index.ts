@@ -13,6 +13,7 @@ type DelegatedSubmitEvent = DelegateEvent<SubmitEvent, HTMLFormElement>;
 
 type Options = {
 	formSelector: string;
+	inlineFormSelector: string;
 };
 
 type FormInfo = {
@@ -30,7 +31,8 @@ export default class SwupFormsPlugin extends Plugin {
 	requires = { swup: '>=4' };
 
 	defaults: Options = {
-		formSelector: 'form[data-swup-form]'
+		formSelector: 'form[data-swup-form]',
+		inlineFormSelector: 'form[data-swup-inline-form]'
 	};
 	options: Options;
 
@@ -233,7 +235,7 @@ export default class SwupFormsPlugin extends Plugin {
 	 */
 	handleInlineForms: Handler<'visit:start'> = (visit) => {
 		const { el } = visit.trigger;
-		if (!el?.matches('form[data-swup-inline-form]')) return;
+		if (!el?.matches(this.options.inlineFormSelector)) return;
 
 		if (!el.id) {
 			console.error(`[@swup/forms-plugin] inline forms must have an id attribute:`, el);
