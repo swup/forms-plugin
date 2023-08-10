@@ -2,6 +2,10 @@
 
 <!-- ## [Unreleased] -->
 
+## [3.1.2] - 2023-08-10
+
+- Add support for [inline forms](https://swup.js.org/plugins/forms-plugin/#inline-forms)
+
 ## [3.1.1] - 2023-08-09
 
 - Fix toplevel `"types"` export
@@ -36,8 +40,9 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/swup/forms-plugin/compare/3.1.1...HEAD
+[Unreleased]: https://github.com/swup/forms-plugin/compare/3.1.2...HEAD
 
+[3.1.2]: https://github.com/swup/forms-plugin/releases/tag/3.1.2
 [3.1.1]: https://github.com/swup/forms-plugin/releases/tag/3.1.1
 [3.1.0]: https://github.com/swup/forms-plugin/releases/tag/3.1.0
 [3.0.0]: https://github.com/swup/forms-plugin/releases/tag/3.0.0
