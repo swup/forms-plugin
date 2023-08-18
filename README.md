@@ -6,8 +6,8 @@ A [swup](https://swup.js.org) plugin for submitting forms.
 - Opt-in with a configurable selector, by default `form[data-swup-form]`
 - Respects custom animations set on the form element
 
-**Note:** This plugin is perfect for simple scenarios like search or
-contact forms. For complex requirements like file uploads or custom
+**Note:** This plugin is meant for simple scenarios like search or
+contact forms. For complex requirements like custom
 serialization, it is recommended to use the swup API directly.
 
 ## Installation
