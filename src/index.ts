@@ -171,7 +171,7 @@ export default class SwupFormsPlugin extends Plugin {
 	/**
 	 * Get information about where and how a form will submit
 	 */
-	protected getFormInfo(form: HTMLFormElement, { submitter }: SubmitEvent): FormInfo {
+	getFormInfo(form: HTMLFormElement, { submitter }: SubmitEvent): FormInfo {
 		const method = (this.getFormAttr('method', form, submitter) || 'get').toUpperCase() as 'GET' | 'POST';
 		const action = this.getFormAttr('action', form, submitter) || getCurrentUrl();
 		const { url, hash } = Location.fromUrl(action);
