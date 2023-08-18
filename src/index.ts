@@ -83,10 +83,10 @@ export default class SwupFormsPlugin extends Plugin {
 	 */
 	beforeFormSubmit(event: DelegatedSubmitEvent): void {
 		const swup = this.swup;
-		const form = event.delegateTarget;
-		const action = form.getAttribute('action') || getCurrentUrl();
+		const { delegateTarget: form, submitter } = event;
+		const action = this.getFormAttr('action', form, submitter) || getCurrentUrl();
 		const opensInNewTabFromKeyPress = this.isSpecialKeyPressed();
-		const opensInNewTabFromTargetAttr = form.getAttribute('target') === '_blank';
+		const opensInNewTabFromTargetAttr = this.getFormAttr('target', form, submitter) === '_blank';
 		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
 
 		/**
@@ -147,7 +147,7 @@ export default class SwupFormsPlugin extends Plugin {
 	 */
 	submitForm(event: DelegatedSubmitEvent): void {
 		const el = event.delegateTarget;
-		const { url, hash, method, data, body } = this.getFormInfo(el);
+		const { url, hash, method, data, body } = this.getFormInfo(el, event);
 		let action = url;
 		let params: { method: 'GET' | 'POST'; body?: FormData | URLSearchParams } = { method };
 
@@ -171,19 +171,23 @@ export default class SwupFormsPlugin extends Plugin {
 	/**
 	 * Get information about where and how a form will submit
 	 */
-	getFormInfo(form: HTMLFormElement): FormInfo {
-		const action = form.getAttribute('action') || getCurrentUrl();
+	protected getFormInfo(form: HTMLFormElement, { submitter }: SubmitEvent): FormInfo {
+		const method = (this.getFormAttr('method', form, submitter) || 'get').toUpperCase() as 'GET' | 'POST';
+		const action = this.getFormAttr('action', form, submitter) || getCurrentUrl();
 		const { url, hash } = Location.fromUrl(action);
-		const method = (form.getAttribute('method') || 'get').toUpperCase() as 'GET' | 'POST';
 		const encoding = (
-			form.getAttribute('enctype') || 'application/x-www-form-urlencoded'
+			this.getFormAttr('enctype', form, submitter) || 'application/x-www-form-urlencoded'
 		).toLowerCase();
 		const multipart = encoding === 'multipart/form-data';
+
 		const data = new FormData(form);
-		let body: FormData | URLSearchParams = data;
-		if (!multipart) {
+		let body: FormData | URLSearchParams;
+		if (multipart) {
+			body = data;
+		} else {
 			body = new URLSearchParams(data as unknown as Record<string, string>);
 		}
+
 		return { url, hash, method, data, body, encoding };
 	}
 
