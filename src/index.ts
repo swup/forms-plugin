@@ -188,6 +188,13 @@ export default class SwupFormsPlugin extends Plugin {
 	}
 
 	/**
+	 * Get a form attribute either from the form, or the submitter element if present
+	 */
+	getFormAttr(attr: string, form: HTMLFormElement, submitter: HTMLElement | null = null): string | null{
+		return submitter?.getAttribute(`form${attr}`) ?? form.getAttribute(attr);
+	}
+
+	/**
 	 * Appends query parameters to a URL
 	 */
 	appendQueryParams(url: string, data: FormData): string {
