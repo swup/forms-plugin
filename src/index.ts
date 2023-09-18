@@ -253,10 +253,18 @@ export default class SwupFormsPlugin extends Plugin {
 			return;
 		}
 
+		// Modify visit to only replace and animate the form's container
 		const selector = `#${el.id}`;
 		visit.containers = [selector];
 		visit.animation.scope = 'containers';
 		visit.animation.selector = selector;
 		visit.scroll.target = selector;
+
+		// Modify visit to focus the form after the transition
+		// @ts-expect-error: can't know if A11yPlugin is installed
+		const a11y = visit.a11y as { focus?: boolean | string };
+		if (typeof a11y === 'object') {
+			a11y.focus = selector;
+		}
 	};
 }
