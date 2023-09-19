@@ -2,6 +2,10 @@
 
 <!-- ## [Unreleased] -->
 
+## [3.4.1] - 2023-09-19
+
+- Use `@swup/cli` for bundling
+
 ## [3.4.0] - 2023-09-18
 
 - Focus inline forms after page transition
@@ -48,8 +52,9 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/swup/forms-plugin/compare/3.4.0...HEAD
+[Unreleased]: https://github.com/swup/forms-plugin/compare/3.4.1...HEAD
 
+[3.4.1]: https://github.com/swup/forms-plugin/releases/tag/3.4.1
 [3.4.0]: https://github.com/swup/forms-plugin/releases/tag/3.4.0
 [3.3.0]: https://github.com/swup/forms-plugin/releases/tag/3.3.0
 [3.2.0]: https://github.com/swup/forms-plugin/releases/tag/3.2.0
