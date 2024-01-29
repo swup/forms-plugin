@@ -89,6 +89,11 @@ export default class SwupFormsPlugin extends Plugin {
 		const opensInNewTabFromTargetAttr = this.getFormAttr('target', form, submitter) === '_blank';
 		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
 
+		// Create temporary visit object for form:submit:* hooks
+		const { url: to, hash } = Location.fromUrl(action);
+		// @ts-expect-error: createVisit is currently private, need to make this semi-public somehow
+		const visit = swup.createVisit({ to, hash, el: form, event });
+
 		/**
 		 * Allow ignoring this form submission via callback
 		 * No use in checking if it will open in a new tab anyway
@@ -101,7 +106,7 @@ export default class SwupFormsPlugin extends Plugin {
 		 * Open the form in a new tab because of its target attribute
 		 */
 		if (opensInNewTabFromTargetAttr) {
-			swup.hooks.callSync('form:submit:newtab', { el: form, event });
+			swup.hooks.callSync('form:submit:newtab', visit, { el: form, event });
 			return;
 		}
 
@@ -110,7 +115,7 @@ export default class SwupFormsPlugin extends Plugin {
 		 * Normalizes behavior across browsers.
 		 */
 		if (opensInNewTabFromKeyPress) {
-			swup.hooks.callSync('form:submit:newtab', { el: form, event });
+			swup.hooks.callSync('form:submit:newtab', visit, { el: form, event });
 
 			form.dataset.swupOriginalFormTarget = form.getAttribute('target') || '';
 			form.setAttribute('target', '_blank');
@@ -126,7 +131,7 @@ export default class SwupFormsPlugin extends Plugin {
 		/**
 		 * Trigger the form:submit hook.
 		 */
-		swup.hooks.callSync('form:submit', { el: form, event }, () => {
+		swup.hooks.callSync('form:submit', visit, { el: form, event }, () => {
 			this.submitForm(event);
 		});
 	}
