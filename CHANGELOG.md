@@ -1,6 +1,8 @@
 # Changelog
 
-<!-- ## [Unreleased] -->
+## [3.4.2] - 2023-09-19
+
+- Fix issue where consecutive submissions would be handled by the browser
 
 ## [3.4.1] - 2023-09-19
 
@@ -52,8 +54,7 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/swup/forms-plugin/compare/3.4.1...HEAD
-
+[3.4.2]: https://github.com/swup/forms-plugin/releases/tag/3.4.2
 [3.4.1]: https://github.com/swup/forms-plugin/releases/tag/3.4.1
 [3.4.0]: https://github.com/swup/forms-plugin/releases/tag/3.4.0
 [3.3.0]: https://github.com/swup/forms-plugin/releases/tag/3.3.0
