@@ -14,6 +14,7 @@ type DelegatedSubmitEvent = DelegateEvent<SubmitEvent, HTMLFormElement>;
 type Options = {
 	formSelector: string;
 	inlineFormSelector: string;
+  stripEmptyParams: boolean;
 };
 
 type FormInfo = {
@@ -32,7 +33,8 @@ export default class SwupFormsPlugin extends Plugin {
 
 	defaults: Options = {
 		formSelector: 'form[data-swup-form]',
-		inlineFormSelector: 'form[data-swup-inline-form]'
+		inlineFormSelector: 'form[data-swup-inline-form]',
+    stripEmptyParams: false
 	};
 	options: Options;
 
@@ -161,6 +163,7 @@ export default class SwupFormsPlugin extends Plugin {
 				params = { method, body };
 				break;
 			case 'GET':
+        this.maybeStripEmptyParams(data);
 				action = this.appendQueryParams(action, data);
 				break;
 			default:
@@ -211,6 +214,17 @@ export default class SwupFormsPlugin extends Plugin {
 		const query = new URLSearchParams(data as unknown as Record<string, string>).toString();
 		return query ? `${path}?${query}` : path;
 	}
+
+  /**
+   * Strip empty params from the FormData (by reference)
+   * @see https://stackoverflow.com/a/64029534/586823
+   */
+  maybeStripEmptyParams(data: FormData): void {
+    if (!this.options.stripEmptyParams) return;
+    for (const [name, value] of Array.from(data.entries())) {
+      if (typeof value === 'string' && value.trim() === '') data.delete(name);
+    }
+  }
 
 	/**
 	 * Is either command or control key down at the moment
