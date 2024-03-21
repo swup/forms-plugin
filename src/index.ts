@@ -14,6 +14,7 @@ type DelegatedSubmitEvent = DelegateEvent<SubmitEvent, HTMLFormElement>;
 type Options = {
 	formSelector: string;
 	inlineFormSelector: string;
+	stripEmptyParams: boolean;
 };
 
 type FormInfo = {
@@ -32,7 +33,8 @@ export default class SwupFormsPlugin extends Plugin {
 
 	defaults: Options = {
 		formSelector: 'form[data-swup-form]',
-		inlineFormSelector: 'form[data-swup-inline-form]'
+		inlineFormSelector: 'form[data-swup-inline-form]',
+		stripEmptyParams: false
 	};
 	options: Options;
 
@@ -86,7 +88,8 @@ export default class SwupFormsPlugin extends Plugin {
 		const { delegateTarget: form, submitter } = event;
 		const action = this.getFormAttr('action', form, submitter) || getCurrentUrl();
 		const opensInNewTabFromKeyPress = this.isSpecialKeyPressed();
-		const opensInNewTabFromTargetAttr = this.getFormAttr('target', form, submitter) === '_blank';
+		const opensInNewTabFromTargetAttr =
+			this.getFormAttr('target', form, submitter) === '_blank';
 		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
 
 		// Create temporary visit object for form:submit:* hooks
@@ -161,6 +164,7 @@ export default class SwupFormsPlugin extends Plugin {
 				params = { method, body };
 				break;
 			case 'GET':
+				this.maybeStripEmptyParams(data);
 				action = this.appendQueryParams(action, data);
 				break;
 			default:
@@ -177,7 +181,9 @@ export default class SwupFormsPlugin extends Plugin {
 	 * Get information about where and how a form will submit
 	 */
 	getFormInfo(form: HTMLFormElement, { submitter }: SubmitEvent): FormInfo {
-		const method = (this.getFormAttr('method', form, submitter) || 'get').toUpperCase() as 'GET' | 'POST';
+		const method = (this.getFormAttr('method', form, submitter) || 'get').toUpperCase() as
+			| 'GET'
+			| 'POST';
 		const action = this.getFormAttr('action', form, submitter) || getCurrentUrl();
 		const { url, hash } = Location.fromUrl(action);
 		const encoding = (
@@ -199,7 +205,11 @@ export default class SwupFormsPlugin extends Plugin {
 	/**
 	 * Get a form attribute either from the form, or the submitter element if present
 	 */
-	getFormAttr(attr: string, form: HTMLFormElement, submitter: HTMLElement | null = null): string | null{
+	getFormAttr(
+		attr: string,
+		form: HTMLFormElement,
+		submitter: HTMLElement | null = null
+	): string | null {
 		return submitter?.getAttribute(`form${attr}`) ?? form.getAttribute(attr);
 	}
 
@@ -210,6 +220,18 @@ export default class SwupFormsPlugin extends Plugin {
 		const path = url.split('?')[0];
 		const query = new URLSearchParams(data as unknown as Record<string, string>).toString();
 		return query ? `${path}?${query}` : path;
+	}
+
+	/**
+	 * Strip empty params from the FormData (by reference)
+	 * @see https://stackoverflow.com/a/64029534/586823
+	 */
+	maybeStripEmptyParams(data: FormData): void {
+		if (!this.options.stripEmptyParams) return;
+
+		for (const [name, value] of Array.from(data.entries())) {
+			if (value === '') data.delete(name);
+		}
 	}
 
 	/**
