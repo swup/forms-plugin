@@ -84,27 +84,33 @@ If you give a form an additional attribute `[data-swup-inline-form]`, swup will:
 
 ### formSelector
 
+Type: `String`, Default: `form[data-swup-form]`
+
 The `formSelector` option defines a selector for forms which should be sent via
 swup. By default, any form with a `data-swup-form` attribute is selected.
 
 ### inlineFormSelector
 
+Type: `String`, Default: `form[data-swup-inline-form]`
+
 Customize the selector for [inline forms](#inline-forms)
 
 ### stripEmptyParams
 
-Strip empty parameters from forms with `action="GET"` before submitting. Cleans up the resulting URL.
+Type: `Boolean`, Default: `false`
 
-Before: `?foo=&bar=baz`
+Strip empty parameters from forms with `action="GET"` before submitting.
 
-After: `?bar=baz`
+- Before: `?foo=&bar=baz&bat=`
+- After: `?bar=baz`
 
 ### Default Options
 
 ```javascript
 new SwupFormsPlugin({
   formSelector: 'form[data-swup-form]',
-  inlineFormSelector: 'form[data-swup-inline-form]'
+  inlineFormSelector: 'form[data-swup-inline-form]',
+  stripEmptyParams: false
 });
 ```
 
