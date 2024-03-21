@@ -82,20 +82,19 @@ If you give a form an additional attribute `[data-swup-inline-form]`, swup will:
 
 ## Options
 
-### formSelector
+### `formSelector`
 
 Type: `String`, Default: `form[data-swup-form]`
 
-The `formSelector` option defines a selector for forms which should be sent via
-swup. By default, any form with a `data-swup-form` attribute is selected.
+Customize the selector for forms which should be handled by swup.
 
-### inlineFormSelector
+### `inlineFormSelector`
 
 Type: `String`, Default: `form[data-swup-inline-form]`
 
 Customize the selector for [inline forms](#inline-forms)
 
-### stripEmptyParams
+### `stripEmptyParams`
 
 Type: `Boolean`, Default: `false`
 
