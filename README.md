@@ -104,16 +104,6 @@ Strip empty parameters from forms with `action="GET"` before submitting.
 - Before: `?foo=&bar=baz&bat=`
 - After: `?bar=baz`
 
-### Default Options
-
-```javascript
-new SwupFormsPlugin({
-  formSelector: 'form[data-swup-form]',
-  inlineFormSelector: 'form[data-swup-inline-form]',
-  stripEmptyParams: false
-});
-```
-
 ## Hooks
 
 The plugin adds two new hooks to swup.
