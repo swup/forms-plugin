@@ -230,7 +230,7 @@ export default class SwupFormsPlugin extends Plugin {
 		if (!this.options.stripEmptyParams) return;
 
 		for (const [name, value] of Array.from(data.entries())) {
-			if (typeof value === 'string' && value.trim() === '') data.delete(name);
+			if (value === '') data.delete(name);
 		}
 	}
 
