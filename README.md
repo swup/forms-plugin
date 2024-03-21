@@ -91,6 +91,14 @@ swup. By default, any form with a `data-swup-form` attribute is selected.
 
 Customize the selector for [inline forms](#inline-forms)
 
+### stripEmptyParams
+
+Strip empty parameters from forms with `action="GET"` before submitting. Cleans up the resulting URL.
+
+Before: `?foo=&bar=baz`
+
+After: `?bar=baz`
+
 ### Default Options
 
 ```javascript
