@@ -228,6 +228,7 @@ export default class SwupFormsPlugin extends Plugin {
 	 */
 	maybeStripEmptyParams(data: FormData): void {
 		if (!this.options.stripEmptyParams) return;
+
 		for (const [name, value] of Array.from(data.entries())) {
 			if (typeof value === 'string' && value.trim() === '') data.delete(name);
 		}
