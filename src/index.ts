@@ -79,6 +79,7 @@ export default class SwupFormsPlugin extends Plugin {
 
 		document.removeEventListener('keydown', this.onKeyDown);
 		document.removeEventListener('keyup', this.onKeyUp);
+		window.removeEventListener('blur', this.onBlur);
 	}
 
 	/**
