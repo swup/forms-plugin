@@ -71,7 +71,7 @@ export default class SwupFormsPlugin extends Plugin {
 
 		document.addEventListener('keydown', this.onKeyDown);
 		document.addEventListener('keyup', this.onKeyUp);
-    window.addEventListener('blur', this.onBlur);
+		window.addEventListener('blur', this.onBlur);
 	}
 
 	unmount() {
@@ -251,12 +251,12 @@ export default class SwupFormsPlugin extends Plugin {
 		}
 	}
 
-  /**
-   * Run every time the window looses focus
-   */
-  onBlur = () => {
-    this.resetSpecialKeys();
-  }
+	/**
+	 * Run every time the window looses focus
+	 */
+	onBlur = () => {
+		this.resetSpecialKeys();
+	};
 
 	/**
 	 * Adjust `specialKeys` on keyDown
