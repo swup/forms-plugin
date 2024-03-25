@@ -1,5 +1,9 @@
 # Changelog
 
+## [3.5.1] - 2024-03-25
+
+- Fix bug where forms sometimes unexpectedly opened in a new tab
+
 ## [3.5.0] - 2024-03-21
 
 - New option `stripEmptyParams`
@@ -58,6 +62,7 @@
 
 - Initial release
 
+[3.5.1]: https://github.com/swup/forms-plugin/releases/tag/3.5.1
 [3.5.0]: https://github.com/swup/forms-plugin/releases/tag/3.5.0
 [3.4.2]: https://github.com/swup/forms-plugin/releases/tag/3.4.2
 [3.4.1]: https://github.com/swup/forms-plugin/releases/tag/3.4.1
