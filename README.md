@@ -50,8 +50,9 @@ The plugin respects custom animations set on the form using the `data-swup-anima
 
 ```html
 <!-- Animate with an 'overlay' custom animation -->
-<form action="/" data-swup-form data-swup-animation="overlay">
+<form action="/" data-swup-form data-swup-animation="overlay"></form>
 ```
+
 ## Inline Forms
 
 If you give a form an additional attribute `[data-swup-inline-form]`, swup will:
@@ -65,12 +66,15 @@ If you give a form an additional attribute `[data-swup-inline-form]`, swup will:
 ### Example
 
 **HTML**
+
 ```html
 <form id="form-1" class="transition-form" data-swup-form data-swup-inline-form method="POST">
   <input name="test"></input> <input type="submit"></input>
 </form>
 ```
+
 **CSS**
+
 ```css
 .transition-form.is-changing {
   transition: opacity 200ms;

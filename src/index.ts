@@ -175,8 +175,12 @@ export default class SwupFormsPlugin extends Plugin {
 		}
 
 		event.preventDefault();
-		this.swup.cache.delete(action);
-		this.swup.navigate(action + hash, params, { el, event });
+
+		const cache = {
+			read: false,
+			write: true
+		};
+		this.swup.navigate(action + hash, { ...params, cache }, { el, event });
 	}
 
 	/**

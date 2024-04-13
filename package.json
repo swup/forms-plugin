@@ -31,6 +31,18 @@
     "email": "gmarcuk@gmail.com",
     "url": "https://gmrchk.com/"
   },
+  "contributors": [
+    {
+      "name": "Rasso Hilber",
+      "email": "mail@rassohilber.com",
+      "url": "https://rassohilber.com"
+    },
+    {
+      "name": "Philipp Daun",
+      "email": "daun@daun.ltd",
+      "url": "https://philippdaun.net"
+    }
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
