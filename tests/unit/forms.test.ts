@@ -1,0 +1,130 @@
+import { describe, expect, it } from 'vitest';
+import { appendQueryParams, getFormAttr, stripEmptyFormParams } from '../../src/forms.js';
+
+const createForm = (html: string) => {
+	return new window.DOMParser().parseFromString(html, 'text/html').querySelector('form')!;
+};
+
+const createButton = (html: string) => {
+	return new window.DOMParser().parseFromString(html, 'text/html').querySelector('button')!;
+};
+
+describe('appendQueryParams', () => {
+	it('adds query params to an existing url', () => {
+		const empty = new FormData();
+		const data = new FormData();
+		data.append('a', 'b');
+		data.append('c', 'd');
+
+		expect(appendQueryParams('/', empty)).toBe('/');
+		expect(appendQueryParams('/path', empty)).toBe('/path');
+		expect(appendQueryParams('/path?query', empty)).toBe('/path');
+
+		expect(appendQueryParams('https://example.net', empty)).toBe('https://example.net');
+		expect(appendQueryParams('https://example.net/path', empty)).toBe('https://example.net/path');
+		expect(appendQueryParams('https://example.net/path?query', empty)).toBe('https://example.net/path');
+
+		expect(appendQueryParams('/', data)).toBe('/?a=b&c=d');
+		expect(appendQueryParams('/path', data)).toBe('/path?a=b&c=d');
+
+		expect(appendQueryParams('https://example.net', data)).toBe('https://example.net?a=b&c=d');
+		expect(appendQueryParams('https://example.net/path', data)).toBe('https://example.net/path?a=b&c=d');
+		expect(appendQueryParams('https://example.net?a=1&b=2&c=3', data)).toBe('https://example.net?a=b&c=d');
+	});
+});
+
+describe('stripEmptyFormParams', () => {
+	it('removes empty form params', () => {
+		const data = (params: Record<string, string>) => {
+			const data = new FormData();
+			for (const [key, value] of Object.entries(params)) {
+				data.append(key, value);
+			}
+			return data;
+		};
+
+		expect(stripEmptyFormParams(data({ a: 'b', c: '' }))).toStrictEqual(data({ a: 'b' }));
+		expect(stripEmptyFormParams(data({ a: 'b', c: '0' }))).toStrictEqual(data({ a: 'b', c: '0' }));
+		expect(stripEmptyFormParams(data({ a: 'b', c: ' ' }))).toStrictEqual(data({ a: 'b', c: ' ' }));
+		expect(stripEmptyFormParams(data({ a: 'b', c: '', d: 'e' }))).toStrictEqual(data({ a: 'b', d: 'e' }));
+	});
+});
+
+describe('getFormAttr', () => {
+	describe('action', () => {
+		it('reads relative action', () => {
+			const form = createForm('<form action="/path"></form>');
+			expect(getFormAttr('action', form)).toBe('/path');
+		});
+
+		it('reads absolute action', () => {
+			const form = createForm('<form action="https://example.net/path"></form>');
+			expect(getFormAttr('action', form)).toBe('https://example.net/path');
+		});
+
+		it('reads empty action', () => {
+			const form = createForm('<form action=""></form>');
+			expect(getFormAttr('action', form)).toBe('');
+		});
+
+		it('falls back on missing action', () => {
+			const form = createForm('<form></form>');
+			expect(getFormAttr('action', form)).toBe('/');
+		});
+
+		it('prefers submitter over form', () => {
+			const form = createForm('<form action="/path"></form>');
+			const button = createButton('<button formaction="/other"></button>');
+			expect(getFormAttr('action', form)).toBe('/path');
+			expect(getFormAttr('action', form, button)).toBe('/other');
+		});
+	});
+
+	describe('method', () => {
+		it('reads method', () => {
+			const form = createForm('<form method="post"></form>');
+			expect(getFormAttr('method', form)).toBe('POST');
+		});
+
+		it('falls back on empty method', () => {
+			const form = createForm('<form method=""></form>');
+			expect(getFormAttr('method', form)).toBe('GET');
+		});
+
+		it('falls back on missing action', () => {
+			const form = createForm('<form></form>');
+			expect(getFormAttr('method', form)).toBe('GET');
+		});
+
+		it('prefers submitter over form', () => {
+			const form = createForm('<form method="post"></form>');
+			const button = createButton('<button formmethod="delete"></button>');
+			expect(getFormAttr('method', form)).toBe('POST');
+			expect(getFormAttr('method', form, button)).toBe('DELETE');
+		});
+	});
+
+	describe('enctype', () => {
+		it('reads enctype', () => {
+			const form = createForm('<form enctype="multipart/form-data"></form>');
+			expect(getFormAttr('enctype', form)).toBe('multipart/form-data');
+		});
+
+		it('falls back on empty enctype', () => {
+			const form = createForm('<form enctype=""></form>');
+			expect(getFormAttr('enctype', form)).toBe('application/x-www-form-urlencoded');
+		});
+
+		it('falls back on missing enctype', () => {
+			const form = createForm('<form></form>');
+			expect(getFormAttr('enctype', form)).toBe('application/x-www-form-urlencoded');
+		});
+
+		it('prefers submitter over form', () => {
+			const form = createForm('<form enctype="multipart/form-data"></form>');
+			const button = createButton('<button formenctype="application/x-www-form-urlencoded"></button>');
+			expect(getFormAttr('enctype', form)).toBe('multipart/form-data');
+			expect(getFormAttr('enctype', form, button)).toBe('application/x-www-form-urlencoded');
+		});
+	});
+});

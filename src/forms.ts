@@ -35,15 +35,15 @@ export function getFormInfo(form: HTMLFormElement, { submitter }: SubmitEvent): 
 /**
 * Get a form attribute either from the form, or the submitter element if present
 */
-export function getFormAttr(attr: 'method', form: HTMLFormElement, submitter: HTMLElement | null): FormMethod;
-export function getFormAttr(attr: 'action', form: HTMLFormElement, submitter: HTMLElement | null): string;
-export function getFormAttr(attr: 'enctype', form: HTMLFormElement, submitter: HTMLElement | null): string;
+export function getFormAttr(attr: 'method', form: HTMLFormElement, submitter?: HTMLElement | null): FormMethod;
+export function getFormAttr(attr: 'action', form: HTMLFormElement, submitter?: HTMLElement | null): string;
+export function getFormAttr(attr: 'enctype', form: HTMLFormElement, submitter?: HTMLElement | null): string;
 export function getFormAttr(attr: string, form: HTMLFormElement, submitter: HTMLElement | null, defaultValue: string): string;
-export function getFormAttr(attr: string, form: HTMLFormElement, submitter: HTMLElement | null, defaultValue?: string): string | null;
+export function getFormAttr(attr: string, form: HTMLFormElement, submitter?: HTMLElement | null, defaultValue?: string): string | null;
 export function getFormAttr(
 	attr: string,
 	form: HTMLFormElement,
-	submitter: HTMLElement | null = null,
+	submitter?: HTMLElement | null,
 	defaultValue?: string
 ): string | null {
 	const value = submitter?.getAttribute(`form${attr}`) ?? form.getAttribute(attr) ?? defaultValue;
@@ -53,34 +53,38 @@ export function getFormAttr(
 /**
 * Sanitize a form attribute to allow easier comparison
 */
-function sanitizeFormAttr(attr: string, value: string | undefined, defaultValue?: string): null | string | FormMethod {
+function sanitizeFormAttr(attr: string, value: string | undefined): null | string | FormMethod {
 	switch (attr) {
 		case 'action':
 			return value ?? getCurrentUrl();
 		case 'method':
-			return (value ?? 'get').toUpperCase() as FormMethod;
+			return (value || 'get').toUpperCase() as FormMethod;
 		case 'enctype':
-			return (value ?? 'application/x-www-form-urlencoded').toLowerCase();
+			return (value || 'application/x-www-form-urlencoded').toLowerCase();
 		default:
 			return value ?? null;
 	}
 }
 
 /**
-* Strip empty params from the FormData (by reference)
+* Strip empty params from a FormData object, returning a new FormData object
 * @see https://stackoverflow.com/a/64029534/586823
 */
-export function stripEmptyFormParams(data: FormData): void {
+export function stripEmptyFormParams(data: FormData): FormData {
+	const stripped = new FormData();
 	for (const [name, value] of Array.from(data.entries())) {
-		if (value === '') data.delete(name);
+		if (value !== '') {
+			stripped.append(name, value);
+		}
 	}
+	return stripped;
 }
 
 /**
  * Appends query parameters to a URL
  */
-export function appendQueryParams(url: string, data: FormData): string {
+export function appendQueryParams(url: string, params: FormData): string {
 	const path = url.split('?')[0];
-	const query = new URLSearchParams(data as unknown as Record<string, string>).toString();
+	const query = new URLSearchParams(params as unknown as Record<string, string>).toString();
 	return query ? `${path}?${query}` : path;
 }

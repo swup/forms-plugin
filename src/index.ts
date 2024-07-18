@@ -1,7 +1,7 @@
 import Plugin from '@swup/plugin';
-import { Location, getCurrentUrl } from 'swup';
+import { Location } from 'swup';
 import type { DelegateEvent, DelegateEventUnsubscribe, Handler } from 'swup';
-import { appendQueryParams, getFormAttr, getFormInfo, stripEmptyFormParams } from './forms.js';
+import { appendQueryParams, FormMethod, getFormAttr, getFormInfo, stripEmptyFormParams } from './forms.js';
 
 declare module 'swup' {
 	export interface HookDefinitions {
@@ -150,17 +150,15 @@ export default class SwupFormsPlugin extends Plugin {
 		const el = event.delegateTarget;
 		const { url, hash, method, data, body } = getFormInfo(el, event);
 		let action = url;
-		let params: { method: 'GET' | 'POST'; body?: FormData | URLSearchParams } = { method };
+		let params: { method: FormMethod; body?: FormData | URLSearchParams } = { method };
 
 		switch (method) {
 			case 'POST':
 				params = { method, body };
 				break;
 			case 'GET':
-				if (this.options.stripEmptyParams) {
-					stripEmptyFormParams(data);
-				}
-				action = appendQueryParams(action, data);
+				const query = this.options.stripEmptyParams ? stripEmptyFormParams(data) : data;
+				action = appendQueryParams(action, query);
 				break;
 			default:
 				console.warn(`Unsupported form method: ${method}`);
@@ -169,10 +167,9 @@ export default class SwupFormsPlugin extends Plugin {
 
 		event.preventDefault();
 
-		const cache = {
-			read: false,
-			write: true
-		};
+
+		const cache = { read: false, write: true };
+
 		this.swup.navigate(action + hash, { ...params, cache }, { el, event });
 	}
 
