@@ -103,9 +103,10 @@ export function stripEmptyFormParams(data: FormData): FormData {
  * Appends query parameters to a URL
  */
 export function appendQueryParams(url: string, params: FormData): string {
-	const path = url.split('?')[0];
+	const [uri, hash] = [...url.split(/(?=#)/), ''];
+	const path = uri.split('?')[0];
 	const query = new URLSearchParams(params as unknown as Record<string, string>).toString();
-	return query ? `${path}?${query}` : path;
+	return query ? `${path}?${query}${hash}` : path + hash;
 }
 
 /**

@@ -10,26 +10,38 @@ const createButton = (html: string) => {
 };
 
 describe('appendQueryParams', () => {
-	it('adds query params to an existing url', () => {
-		const empty = new FormData();
-		const data = new FormData();
-		data.append('a', 'b');
-		data.append('c', 'd');
+	const empty = new FormData();
+	const data = new FormData();
+	data.append('a', 'b');
+	data.append('c', 'd');
 
+	it('does not add empty params', () => {
 		expect(appendQueryParams('/', empty)).toBe('/');
 		expect(appendQueryParams('/path', empty)).toBe('/path');
 		expect(appendQueryParams('/path?query', empty)).toBe('/path');
+	});
 
+	it('does not add empty params to an absolute url', () => {
 		expect(appendQueryParams('https://example.net', empty)).toBe('https://example.net');
 		expect(appendQueryParams('https://example.net/path', empty)).toBe('https://example.net/path');
 		expect(appendQueryParams('https://example.net/path?query', empty)).toBe('https://example.net/path');
+	});
 
+	it('adds query params to a url', () => {
 		expect(appendQueryParams('/', data)).toBe('/?a=b&c=d');
 		expect(appendQueryParams('/path', data)).toBe('/path?a=b&c=d');
+	});
 
+	it('adds query params to an absolute url', () => {
 		expect(appendQueryParams('https://example.net', data)).toBe('https://example.net?a=b&c=d');
 		expect(appendQueryParams('https://example.net/path', data)).toBe('https://example.net/path?a=b&c=d');
 		expect(appendQueryParams('https://example.net?a=1&b=2&c=3', data)).toBe('https://example.net?a=b&c=d');
+	});
+
+	it('keeps hash in place', () => {
+		expect(appendQueryParams('/#hash', data)).toBe('/?a=b&c=d#hash');
+		expect(appendQueryParams('/path#hash', data)).toBe('/path?a=b&c=d#hash');
+		expect(appendQueryParams('https://example.net/path#hash', data)).toBe('https://example.net/path?a=b&c=d#hash');
 	});
 });
 
