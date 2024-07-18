@@ -3,33 +3,52 @@ import { getCurrentUrl, Location } from "swup";
 export type FormMethod = 'GET' | 'POST';
 
 export type FormInfo = {
+	origin: string;
+	action: string;
 	url: string;
 	hash: string;
 	method: FormMethod;
 	data: FormData;
-	body: URLSearchParams | FormData;
+	body: URLSearchParams | FormData | undefined;
 	encoding: string;
 };
 
 /**
  * Get information about where and how a form will submit
  */
-export function getFormInfo(form: HTMLFormElement, { submitter }: SubmitEvent): FormInfo {
+export function getFormInfo(
+	form: HTMLFormElement,
+	submitter?: HTMLElement | null,
+	{ stripEmptyParams = false }: { stripEmptyParams?: boolean } = {}
+): FormInfo {
 	const method = getFormAttr('method', form, submitter);
-	const action = getFormAttr('action', form, submitter);
 	const encoding = getFormAttr('enctype', form, submitter);
-	const { url, hash } = Location.fromUrl(action);
 	const multipart = encoding === 'multipart/form-data';
+	const { origin, url: action, hash } = Location.fromUrl(getFormAttr('action', form, submitter));
 
-	const data = new FormData(form);
-	let body: FormData | URLSearchParams;
-	if (multipart) {
-		body = data;
-	} else {
-		body = new URLSearchParams(data as unknown as Record<string, string>);
+	// Create form data object
+	const data = new FormData(form, submitter);
+
+	// Create body object for post requests
+	let body: FormData | URLSearchParams | undefined;
+	if (method === 'POST') {
+		if (multipart) {
+			body = data;
+		} else {
+			body = new URLSearchParams(data as unknown as Record<string, string>);
+		}
 	}
 
-	return { url, hash, method, data, body, encoding };
+	// Build request url from action and data
+	let url: string;
+	if (method === 'GET') {
+		const query = stripEmptyParams ? stripEmptyFormParams(data) : data;
+		url = appendQueryParams(action, query);
+	} else {
+		url = action;
+	}
+
+	return { origin, action, url, hash, method, data, body, encoding };
 }
 
 /**

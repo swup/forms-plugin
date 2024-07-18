@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vitest } from 'vitest';
-import { appendQueryParams, forceFormToOpenInNewTab, getFormAttr, stripEmptyFormParams } from '../../src/forms.js';
+import { appendQueryParams, forceFormToOpenInNewTab, getFormAttr, getFormInfo, stripEmptyFormParams } from '../../src/forms.js';
 
 const createForm = (html: string) => {
 	return new window.DOMParser().parseFromString(html, 'text/html').querySelector('form')!;
@@ -154,6 +154,54 @@ describe('getFormAttr', () => {
 			const button = createButton('<button formenctype="application/x-www-form-urlencoded"></button>');
 			expect(getFormAttr('enctype', form)).toBe('multipart/form-data');
 			expect(getFormAttr('enctype', form, button)).toBe('application/x-www-form-urlencoded');
+		});
+	});
+});
+
+describe('getFormInfo', () => {
+	it('reads info from attributes', () => {
+		const form = createForm('<form action="/path#anchor"></form>');
+		expect(getFormInfo(form)).toMatchObject({
+			url: '/path',
+			hash: '#anchor',
+			method: 'GET',
+			encoding: 'application/x-www-form-urlencoded',
+		});
+	});
+
+	it('builds get params', () => {
+		const form = createForm('<form action="/path#anchor"><input type="hidden" name="a" value="b"></form>');
+		expect(getFormInfo(form)).toMatchObject({
+			action: '/path',
+			url: '/path?a=b',
+			hash: '#anchor',
+			method: 'GET',
+			body: undefined,
+			encoding: 'application/x-www-form-urlencoded',
+		});
+	});
+
+	it('builds post params', () => {
+		const form = createForm('<form action="/path#anchor" method="post"><input type="hidden" name="b" value="c"></form>');
+		expect(getFormInfo(form)).toMatchObject({
+			action: '/path',
+			url: '/path',
+			hash: '#anchor',
+			method: 'POST',
+			body: new URLSearchParams({ b: 'c' }),
+			encoding: 'application/x-www-form-urlencoded',
+		});
+	});
+
+	it('builds multipart params', () => {
+		const form = createForm('<form action="/path#anchor" method="post" enctype="multipart/form-data"><input type="hidden" name="b" value="c"></form>');
+		expect(getFormInfo(form)).toMatchObject({
+			action: '/path',
+			url: '/path',
+			hash: '#anchor',
+			method: 'POST',
+			body: new FormData(form),
+			encoding: 'multipart/form-data',
 		});
 	});
 });
