@@ -1,6 +1,7 @@
 import Plugin from '@swup/plugin';
 import { Location, getCurrentUrl } from 'swup';
 import type { DelegateEvent, DelegateEventUnsubscribe, Handler } from 'swup';
+import { appendQueryParams, getFormAttr, getFormInfo, stripEmptyFormParams } from './forms.js';
 
 declare module 'swup' {
 	export interface HookDefinitions {
@@ -15,15 +16,6 @@ type Options = {
 	formSelector: string;
 	inlineFormSelector: string;
 	stripEmptyParams: boolean;
-};
-
-type FormInfo = {
-	url: string;
-	hash: string;
-	method: 'GET' | 'POST';
-	data: FormData;
-	body: URLSearchParams | FormData;
-	encoding: string;
 };
 
 export default class SwupFormsPlugin extends Plugin {
@@ -88,10 +80,9 @@ export default class SwupFormsPlugin extends Plugin {
 	beforeFormSubmit(event: DelegatedSubmitEvent): void {
 		const swup = this.swup;
 		const { delegateTarget: form, submitter } = event;
-		const action = this.getFormAttr('action', form, submitter) || getCurrentUrl();
+		const action = getFormAttr('action', form, submitter);
 		const opensInNewTabFromKeyPress = this.isSpecialKeyPressed();
-		const opensInNewTabFromTargetAttr =
-			this.getFormAttr('target', form, submitter) === '_blank';
+		const opensInNewTabFromTargetAttr = getFormAttr('target', form, submitter) === '_blank';
 		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
 
 		// Create temporary visit object for form:submit:* hooks
@@ -157,7 +148,7 @@ export default class SwupFormsPlugin extends Plugin {
 	 */
 	submitForm(event: DelegatedSubmitEvent): void {
 		const el = event.delegateTarget;
-		const { url, hash, method, data, body } = this.getFormInfo(el, event);
+		const { url, hash, method, data, body } = getFormInfo(el, event);
 		let action = url;
 		let params: { method: 'GET' | 'POST'; body?: FormData | URLSearchParams } = { method };
 
@@ -166,8 +157,10 @@ export default class SwupFormsPlugin extends Plugin {
 				params = { method, body };
 				break;
 			case 'GET':
-				this.maybeStripEmptyParams(data);
-				action = this.appendQueryParams(action, data);
+				if (this.options.stripEmptyParams) {
+					stripEmptyFormParams(data);
+				}
+				action = appendQueryParams(action, data);
 				break;
 			default:
 				console.warn(`Unsupported form method: ${method}`);
@@ -181,63 +174,6 @@ export default class SwupFormsPlugin extends Plugin {
 			write: true
 		};
 		this.swup.navigate(action + hash, { ...params, cache }, { el, event });
-	}
-
-	/**
-	 * Get information about where and how a form will submit
-	 */
-	getFormInfo(form: HTMLFormElement, { submitter }: SubmitEvent): FormInfo {
-		const method = (this.getFormAttr('method', form, submitter) || 'get').toUpperCase() as
-			| 'GET'
-			| 'POST';
-		const action = this.getFormAttr('action', form, submitter) || getCurrentUrl();
-		const { url, hash } = Location.fromUrl(action);
-		const encoding = (
-			this.getFormAttr('enctype', form, submitter) || 'application/x-www-form-urlencoded'
-		).toLowerCase();
-		const multipart = encoding === 'multipart/form-data';
-
-		const data = new FormData(form);
-		let body: FormData | URLSearchParams;
-		if (multipart) {
-			body = data;
-		} else {
-			body = new URLSearchParams(data as unknown as Record<string, string>);
-		}
-
-		return { url, hash, method, data, body, encoding };
-	}
-
-	/**
-	 * Get a form attribute either from the form, or the submitter element if present
-	 */
-	getFormAttr(
-		attr: string,
-		form: HTMLFormElement,
-		submitter: HTMLElement | null = null
-	): string | null {
-		return submitter?.getAttribute(`form${attr}`) ?? form.getAttribute(attr);
-	}
-
-	/**
-	 * Appends query parameters to a URL
-	 */
-	appendQueryParams(url: string, data: FormData): string {
-		const path = url.split('?')[0];
-		const query = new URLSearchParams(data as unknown as Record<string, string>).toString();
-		return query ? `${path}?${query}` : path;
-	}
-
-	/**
-	 * Strip empty params from the FormData (by reference)
-	 * @see https://stackoverflow.com/a/64029534/586823
-	 */
-	maybeStripEmptyParams(data: FormData): void {
-		if (!this.options.stripEmptyParams) return;
-
-		for (const [name, value] of Array.from(data.entries())) {
-			if (value === '') data.delete(name);
-		}
 	}
 
 	/**
