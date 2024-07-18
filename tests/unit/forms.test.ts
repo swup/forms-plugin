@@ -172,10 +172,12 @@ describe('getFormAttr', () => {
 
 describe('getFormInfo', () => {
 	it('reads info from attributes', () => {
-		const form = createForm('<form action="/path#anchor"></form>');
+		const form = createForm('<form action="/path#anchor" target="frame"></form>');
 		expect(getFormInfo(form)).toMatchObject({
+			href: 'http://localhost:3000/path#anchor',
 			url: '/path',
 			hash: '#anchor',
+			target: 'frame',
 			method: 'GET',
 			encoding: 'application/x-www-form-urlencoded',
 		});
@@ -184,7 +186,7 @@ describe('getFormInfo', () => {
 	it('builds get params', () => {
 		const form = createForm('<form action="/path#anchor"><input type="hidden" name="a" value="b"></form>');
 		expect(getFormInfo(form)).toMatchObject({
-			action: '/path',
+			href: 'http://localhost:3000/path?a=b#anchor',
 			url: '/path?a=b',
 			hash: '#anchor',
 			method: 'GET',
@@ -196,7 +198,7 @@ describe('getFormInfo', () => {
 	it('builds post params', () => {
 		const form = createForm('<form action="/path#anchor" method="post"><input type="hidden" name="b" value="c"></form>');
 		expect(getFormInfo(form)).toMatchObject({
-			action: '/path',
+			href: 'http://localhost:3000/path#anchor',
 			url: '/path',
 			hash: '#anchor',
 			method: 'POST',
@@ -208,7 +210,7 @@ describe('getFormInfo', () => {
 	it('builds multipart params', () => {
 		const form = createForm('<form action="/path#anchor" method="post" enctype="multipart/form-data"><input type="hidden" name="b" value="c"></form>');
 		expect(getFormInfo(form)).toMatchObject({
-			action: '/path',
+			href: 'http://localhost:3000/path#anchor',
 			url: '/path',
 			hash: '#anchor',
 			method: 'POST',

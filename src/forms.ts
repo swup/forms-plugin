@@ -5,9 +5,11 @@ export type FormMethod = 'GET' | 'POST';
 export type FormInfo = {
 	origin: string;
 	action: string;
+	href: string;
 	url: string;
 	hash: string;
 	method: FormMethod;
+	target: string | null;
 	data: FormData;
 	body: URLSearchParams | FormData | undefined;
 	encoding: string;
@@ -24,7 +26,8 @@ export function getFormInfo(
 	const method = getFormAttr('method', form, submitter);
 	const encoding = getFormAttr('enctype', form, submitter);
 	const multipart = encoding === 'multipart/form-data';
-	const { origin, url: action, hash } = Location.fromUrl(getFormAttr('action', form, submitter));
+	const target = getFormAttr('target', form, submitter, '');
+	const { origin, href: action } = Location.fromUrl(getFormAttr('action', form, submitter));
 
 	// Create form data object
 	const data = new FormData(form, submitter);
@@ -39,16 +42,17 @@ export function getFormInfo(
 		}
 	}
 
-	// Build request url from action and data
-	let url: string;
+	// Build relative + absolute request url from action and data
+	let href: string;
 	if (method === 'GET') {
 		const query = stripEmptyParams ? stripEmptyFormParams(data) : data;
-		url = appendQueryParams(action, query);
+		href = appendQueryParams(action, query);
 	} else {
-		url = action;
+		href = action;
 	}
+	const { url, hash } = Location.fromUrl(href);
 
-	return { origin, action, url, hash, method, data, body, encoding };
+	return { origin, action, href, url, hash, method, target, data, body, encoding };
 }
 
 /**

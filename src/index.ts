@@ -1,7 +1,6 @@
 import Plugin from '@swup/plugin';
-import { Location } from 'swup';
 import type { DelegateEvent, DelegateEventUnsubscribe, Handler } from 'swup';
-import { appendQueryParams, forceFormToOpenInNewTab, FormMethod, getFormAttr, getFormInfo, stripEmptyFormParams } from './forms.js';
+import { forceFormToOpenInNewTab, getFormInfo } from './forms.js';
 import { trackKeys } from './keys.js';
 
 declare module 'swup' {
@@ -75,23 +74,20 @@ export default class SwupFormsPlugin extends Plugin {
 		const swup = this.swup;
 		const { delegateTarget: form, submitter } = event;
 
-		const action = getFormAttr('action', form, submitter);
-		const target = getFormAttr('target', form, submitter);
-
+		const { href, url, hash, target } = getFormInfo(form, submitter);
 		const opensInNewTabFromKeyPress = this.specialKeys.pressed;
 		const opensInNewTabFromTargetAttr = target === '_blank';
 		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
 
 		// Create temporary visit object for form:submit:* hooks
-		const { url: to, hash } = Location.fromUrl(action);
 		// @ts-expect-error: createVisit is currently private, need to make this semi-public somehow
-		const visit = swup.createVisit({ to, hash, el: form, event });
+		const visit = swup.createVisit({ to: url, hash, el: form, event });
 
 		/**
 		 * Allow ignoring this form submission via callback
 		 * No use in checking if it will open in a new tab anyway
 		 */
-		if (!opensInNewTab && swup.shouldIgnoreVisit(action, { el: form, event })) {
+		if (!opensInNewTab && swup.shouldIgnoreVisit(href, { el: form, event })) {
 			return;
 		}
 
@@ -109,10 +105,8 @@ export default class SwupFormsPlugin extends Plugin {
 		 */
 		if (opensInNewTabFromKeyPress) {
 			swup.hooks.callSync('form:submit:newtab', visit, { el: form, event });
-
 			const restorePreviousTarget = forceFormToOpenInNewTab(form);
 			form.addEventListener('submit', () => setTimeout(restorePreviousTarget), { once: true });
-
 			return;
 		}
 
@@ -130,7 +124,8 @@ export default class SwupFormsPlugin extends Plugin {
 	submitForm(event: DelegatedSubmitEvent): void {
 		const { delegateTarget: form, submitter } = event;
 		const { stripEmptyParams } = this.options;
-		const { url, hash, method, body } = getFormInfo(form, submitter, { stripEmptyParams });
+		const { href, method, body } = getFormInfo(form, submitter, { stripEmptyParams });
+		const cache = { read: false, write: true };
 
 		if (!['GET', 'POST'].includes(method)) {
 			console.warn(`Unsupported form method: ${method}`);
@@ -139,9 +134,7 @@ export default class SwupFormsPlugin extends Plugin {
 
 		event.preventDefault();
 
-		const cache = { read: false, write: true };
-
-		this.swup.navigate(url + hash, { method, body, cache }, { el: form, event });
+		this.swup.navigate(href, { method, body, cache }, { el: form, event });
 	}
 
 	/**
