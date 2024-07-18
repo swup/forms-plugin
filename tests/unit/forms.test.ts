@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { appendQueryParams, getFormAttr, stripEmptyFormParams } from '../../src/forms.js';
+import { afterEach, beforeEach, describe, expect, it, vitest } from 'vitest';
+import { appendQueryParams, forceFormToOpenInNewTab, getFormAttr, stripEmptyFormParams } from '../../src/forms.js';
 
 const createForm = (html: string) => {
 	return new window.DOMParser().parseFromString(html, 'text/html').querySelector('form')!;
@@ -47,6 +47,35 @@ describe('stripEmptyFormParams', () => {
 		expect(stripEmptyFormParams(data({ a: 'b', c: '0' }))).toStrictEqual(data({ a: 'b', c: '0' }));
 		expect(stripEmptyFormParams(data({ a: 'b', c: ' ' }))).toStrictEqual(data({ a: 'b', c: ' ' }));
 		expect(stripEmptyFormParams(data({ a: 'b', c: '', d: 'e' }))).toStrictEqual(data({ a: 'b', d: 'e' }));
+	});
+});
+
+describe('forceFormToOpenInNewTab', () => {
+	beforeEach(() => {
+		vitest.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => setTimeout(cb, 0));
+	});
+
+	afterEach(() => {
+		vitest.resetAllMocks();
+	});
+
+	it('sets target attribute on the form', () => {
+		const form = createForm('<form></form>');
+		forceFormToOpenInNewTab(form);
+		expect(form.getAttribute('target')).toBe('_blank');
+	});
+
+	it('overwrites target attribute on the form', () => {
+		const form = createForm('<form target="test"></form>');
+		forceFormToOpenInNewTab(form);
+		expect(form.getAttribute('target')).toBe('_blank');
+	});
+
+	it('restores previous target attribute on the form', () => {
+		const form = createForm('<form target="test"></form>');
+		const restore = forceFormToOpenInNewTab(form);
+		restore();
+		expect(form.getAttribute('target')).toBe('test');
 	});
 });
 

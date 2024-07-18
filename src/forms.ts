@@ -88,3 +88,20 @@ export function appendQueryParams(url: string, params: FormData): string {
 	const query = new URLSearchParams(params as unknown as Record<string, string>).toString();
 	return query ? `${path}?${query}` : path;
 }
+
+/**
+* Force a form to open in a new tab by setting the target attribute to _blank
+* @returns A function to restore the original target attribute
+*/
+export function forceFormToOpenInNewTab(form: HTMLFormElement): () => void {
+	const originalTarget = form.getAttribute('target') || '';
+	form.setAttribute('target', '_blank');
+
+	return () => {
+		if (originalTarget) {
+			form.setAttribute('target', originalTarget);
+		} else {
+			form.removeAttribute('target');
+		}
+	}
+}

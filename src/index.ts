@@ -1,7 +1,7 @@
 import Plugin from '@swup/plugin';
 import { Location } from 'swup';
 import type { DelegateEvent, DelegateEventUnsubscribe, Handler } from 'swup';
-import { appendQueryParams, FormMethod, getFormAttr, getFormInfo, stripEmptyFormParams } from './forms.js';
+import { appendQueryParams, forceFormToOpenInNewTab, FormMethod, getFormAttr, getFormInfo, stripEmptyFormParams } from './forms.js';
 import { trackKeys } from './keys.js';
 
 declare module 'swup' {
@@ -47,6 +47,8 @@ export default class SwupFormsPlugin extends Plugin {
 		this.swup.hooks.create('form:submit');
 		this.swup.hooks.create('form:submit:newtab');
 
+		this.specialKeys.watch();
+
 		// Register the submit handler. Using `capture:true` to be
 		// able to set the form's target attribute on the fly.
 		this.formSubmitDelegate = this.swup.delegateEvent(
@@ -58,9 +60,7 @@ export default class SwupFormsPlugin extends Plugin {
 			}
 		);
 
-		this.on('visit:start', this.handleInlineForms, { priority: 1 });
-
-		this.specialKeys.watch();
+		this.on('visit:start', this.prepareInlineForms, { priority: 1 });
 	}
 
 	unmount() {
@@ -74,9 +74,12 @@ export default class SwupFormsPlugin extends Plugin {
 	beforeFormSubmit(event: DelegatedSubmitEvent): void {
 		const swup = this.swup;
 		const { delegateTarget: form, submitter } = event;
+
 		const action = getFormAttr('action', form, submitter);
+		const target = getFormAttr('target', form, submitter);
+
 		const opensInNewTabFromKeyPress = this.specialKeys.pressed;
-		const opensInNewTabFromTargetAttr = getFormAttr('target', form, submitter) === '_blank';
+		const opensInNewTabFromTargetAttr = target === '_blank';
 		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
 
 		// Create temporary visit object for form:submit:* hooks
@@ -107,13 +110,8 @@ export default class SwupFormsPlugin extends Plugin {
 		if (opensInNewTabFromKeyPress) {
 			swup.hooks.callSync('form:submit:newtab', visit, { el: form, event });
 
-			form.dataset.swupOriginalFormTarget = form.getAttribute('target') || '';
-			form.setAttribute('target', '_blank');
-			form.addEventListener(
-				'submit',
-				() => requestAnimationFrame(() => this.restorePreviousFormTarget(form)),
-				{ once: true }
-			);
+			const restorePreviousTarget = forceFormToOpenInNewTab(form);
+			form.addEventListener('submit', () => setTimeout(restorePreviousTarget), { once: true });
 
 			return;
 		}
@@ -124,17 +122,6 @@ export default class SwupFormsPlugin extends Plugin {
 		swup.hooks.callSync('form:submit', visit, { el: form, event }, () => {
 			this.submitForm(event);
 		});
-	}
-
-	/**
-	 * Restores the previous form target if available
-	 */
-	restorePreviousFormTarget(form: HTMLFormElement): void {
-		if (form.dataset.swupOriginalFormTarget) {
-			form.setAttribute('target', form.dataset.swupOriginalFormTarget);
-		} else {
-			form.removeAttribute('target');
-		}
 	}
 
 	/**
@@ -161,7 +148,6 @@ export default class SwupFormsPlugin extends Plugin {
 
 		event.preventDefault();
 
-
 		const cache = { read: false, write: true };
 
 		this.swup.navigate(action + hash, { ...params, cache }, { el, event });
@@ -170,7 +156,7 @@ export default class SwupFormsPlugin extends Plugin {
 	/**
 	 * Handles visits triggered by forms matching [data-swup-inline-form]
 	 */
-	handleInlineForms: Handler<'visit:start'> = (visit) => {
+	prepareInlineForms: Handler<'visit:start'> = (visit) => {
 		const { el } = visit.trigger;
 		if (!el?.matches(this.options.inlineFormSelector)) return;
 
