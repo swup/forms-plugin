@@ -5,6 +5,23 @@
 export function trackKeys(keys: string[]) {
 	let pressed: { [key: string]: boolean } = {};
 
+	function watch() {
+		document.addEventListener('keydown', handleKeyDown);
+		document.addEventListener('keyup', handleKeyUp);
+		window.addEventListener('blur', handleWindowBlur);
+	}
+
+	function unwatch() {
+		document.removeEventListener('keydown', handleKeyDown);
+		document.removeEventListener('keyup', handleKeyUp);
+		document.removeEventListener('blur', handleWindowBlur);
+		reset();
+	}
+
+	function reset() {
+		pressed = {};
+	}
+
 	function handleKeyDown({ key }: KeyboardEvent) {
 		if (keys.includes(key)) {
 			pressed[key] = true;
@@ -18,26 +35,14 @@ export function trackKeys(keys: string[]) {
 	}
 
 	function handleWindowBlur() {
-		pressed = {};
-	}
-
-	function watch() {
-		document.addEventListener('keydown', handleKeyDown);
-		document.addEventListener('keyup', handleKeyUp);
-		window.addEventListener('blur', handleWindowBlur);
-	}
-
-	function unwatch() {
-		document.removeEventListener('keydown', handleKeyDown);
-		document.removeEventListener('keyup', handleKeyUp);
-		document.removeEventListener('blur', handleWindowBlur);
+		reset();
 	}
 
 	return {
 		watch,
 		unwatch,
 		get pressed(): boolean {
-			return Object.keys(pressed).filter(Boolean).length > 0;
+			return Object.values(pressed).filter(Boolean).length > 0;
 		}
 	};
 }
