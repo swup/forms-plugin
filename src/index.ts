@@ -2,6 +2,7 @@ import Plugin from '@swup/plugin';
 import { Location } from 'swup';
 import type { DelegateEvent, DelegateEventUnsubscribe, Handler } from 'swup';
 import { appendQueryParams, FormMethod, getFormAttr, getFormInfo, stripEmptyFormParams } from './forms.js';
+import { trackKeys } from './keys.js';
 
 declare module 'swup' {
 	export interface HookDefinitions {
@@ -28,20 +29,18 @@ export default class SwupFormsPlugin extends Plugin {
 		inlineFormSelector: 'form[data-swup-inline-form]',
 		stripEmptyParams: false
 	};
+
 	options: Options;
 
 	// Track pressed keys to detect form submissions to a new tab
-	specialKeys: { [key: string]: boolean } = {
-		Meta: false,
-		Control: false,
-		Shift: false
-	};
+	specialKeys: ReturnType<typeof trackKeys>;
 
 	formSubmitDelegate?: DelegateEventUnsubscribe;
 
 	constructor(options: Partial<Options> = {}) {
 		super();
 		this.options = { ...this.defaults, ...options };
+		this.specialKeys = trackKeys(['Meta', 'Control', 'Shift']);
 	}
 
 	mount() {
@@ -61,17 +60,12 @@ export default class SwupFormsPlugin extends Plugin {
 
 		this.on('visit:start', this.handleInlineForms, { priority: 1 });
 
-		document.addEventListener('keydown', this.onKeyDown);
-		document.addEventListener('keyup', this.onKeyUp);
-		window.addEventListener('blur', this.onBlur);
+		this.specialKeys.watch();
 	}
 
 	unmount() {
 		this.formSubmitDelegate?.destroy();
-
-		document.removeEventListener('keydown', this.onKeyDown);
-		document.removeEventListener('keyup', this.onKeyUp);
-		window.removeEventListener('blur', this.onBlur);
+		this.specialKeys.unwatch();
 	}
 
 	/**
@@ -81,7 +75,7 @@ export default class SwupFormsPlugin extends Plugin {
 		const swup = this.swup;
 		const { delegateTarget: form, submitter } = event;
 		const action = getFormAttr('action', form, submitter);
-		const opensInNewTabFromKeyPress = this.isSpecialKeyPressed();
+		const opensInNewTabFromKeyPress = this.specialKeys.pressed;
 		const opensInNewTabFromTargetAttr = getFormAttr('target', form, submitter) === '_blank';
 		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
 
@@ -172,47 +166,6 @@ export default class SwupFormsPlugin extends Plugin {
 
 		this.swup.navigate(action + hash, { ...params, cache }, { el, event });
 	}
-
-	/**
-	 * Is either command or control key down at the moment
-	 */
-	isSpecialKeyPressed(): boolean {
-		return Object.values(this.specialKeys).some((value) => value);
-	}
-
-	/**
-	 * Reset all entries in `specialKeys` to false
-	 */
-	resetSpecialKeys() {
-		for (const key of Object.keys(this.specialKeys)) {
-			this.specialKeys[key] = false;
-		}
-	}
-
-	/**
-	 * Run every time the window looses focus
-	 */
-	onBlur = () => {
-		this.resetSpecialKeys();
-	};
-
-	/**
-	 * Adjust `specialKeys` on keyDown
-	 */
-	onKeyDown = (event: KeyboardEvent): void => {
-		if (this.specialKeys.hasOwnProperty(event.key)) {
-			this.specialKeys[event.key] = true;
-		}
-	};
-
-	/**
-	 * Adjust `specialKeys` on keyUp
-	 */
-	onKeyUp = (event: KeyboardEvent): void => {
-		if (this.specialKeys.hasOwnProperty(event.key)) {
-			this.specialKeys[event.key] = false;
-		}
-	};
 
 	/**
 	 * Handles visits triggered by forms matching [data-swup-inline-form]
