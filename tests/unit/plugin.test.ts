@@ -1,22 +1,21 @@
-import { vitest, describe, expect, it, beforeEach, afterEach } from 'vitest';
-import Swup, { Visit } from 'swup';
+import { vitest, describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
+import Swup, { DelegateEvent, Visit } from 'swup';
 import SwupFormsPlugin from '../../src/index.js';
 
 // vitest.mock('../../src/forms.js');
 // vitest.mock('../../src/keys.js');
 
-const page = { page: { html: '', url: '/' } };
-
 const createForm = (html: string) => {
-	return new window.DOMParser().parseFromString(html, 'text/html').querySelector('form')!;
+	const form = new window.DOMParser().parseFromString(html, 'text/html').querySelector('form')!;
+	document.body.appendChild(form);
+	return form;
 };
 
 const submitForm = (form: HTMLFormElement, submitter?: HTMLButtonElement | null) => {
-	document.body.appendChild(form);
 	if (submitter) {
 		submitter.click();
 	} else {
-		form.dispatchEvent(new Event('submit', { bubbles: true }));
+		form.dispatchEvent(new SubmitEvent('submit', { bubbles: true }));
 	}
 }
 
@@ -46,7 +45,7 @@ describe('SwupFormsPlugin', () => {
 		const spy = vitest.spyOn(plugin, 'beforeFormSubmit').mockImplementation(() => {});
 		swup.use(plugin);
 
-		const form = createForm('<form action="/submit"></form>');
+		const form = createForm('<form action="/path"></form>');
 		submitForm(form);
 
 		expect(spy).not.toHaveBeenCalled();
@@ -56,7 +55,7 @@ describe('SwupFormsPlugin', () => {
 		const spy = vitest.spyOn(plugin, 'beforeFormSubmit').mockImplementation(() => {});
 		swup.use(plugin);
 
-		const form = createForm('<form action="/submit" data-swup-form></form>');
+		const form = createForm('<form action="/path" data-swup-form></form>');
 		submitForm(form);
 
 		expect(spy).toHaveBeenCalledWith(expect.objectContaining({ delegateTarget: form }));
@@ -66,12 +65,100 @@ describe('SwupFormsPlugin', () => {
 		const spy = vitest.spyOn(plugin, 'beforeFormSubmit').mockImplementation(() => {});
 		swup.use(plugin);
 
-		const form = createForm('<form action="/submit" data-swup-form><button type="submit"></button></form>');
+		const form = createForm('<form action="/path" data-swup-form><button type="submit"></button></form>');
 		const submitter = form.querySelector('button');
 		submitForm(form);
 		expect(spy).toHaveBeenCalledWith(expect.not.objectContaining({ submitter }));
 		submitForm(form, submitter);
 		expect(spy).toHaveBeenCalledWith(expect.objectContaining({ submitter }));
+	});
+
+	it('calls the form:submit hook before submitting', async () => {
+		swup.use(plugin);
+
+		vitest.spyOn(plugin, 'submitForm').mockImplementation(() => {});
+		const formHookSpy = vitest.fn();
+
+		swup.hooks.on('form:submit', formHookSpy);
+
+		const form = createForm('<form action="/path" data-swup-form></form>');
+		submitForm(form);
+
+		const expectedEvent = expect.objectContaining({ delegateTarget: form });
+
+		const expectedVisit = expect.objectContaining({
+			from: expect.objectContaining({ url: '/' }),
+			to: expect.objectContaining({ url: '/path' }),
+			trigger: expect.objectContaining({ el: form, event: expectedEvent })
+		});
+
+		const expectedArgs = expect.objectContaining({  el: form, event: expectedEvent });
+
+		expect(formHookSpy).toHaveBeenCalledWith(expectedVisit, expectedArgs, undefined);
+	});
+
+	it('calls submitForm when submitting', async () => {
+		swup.use(plugin);
+
+		const submitSpy = vitest.spyOn(plugin, 'submitForm').mockImplementation(() => {});
+
+		const form = createForm('<form action="/path" data-swup-form></form>');
+		submitForm(form);
+
+		expect(submitSpy).toHaveBeenCalledWith(expect.objectContaining({ delegateTarget: form }));
+	});
+
+	it('prevents default in submitForm', async () => {
+		swup.use(plugin);
+
+		const form = createForm('<form action="/path" data-swup-form></form>');
+		const originalEvent = new SubmitEvent('submit', { cancelable: true });
+		const event: DelegateEvent<SubmitEvent, HTMLFormElement> = { ...originalEvent, delegateTarget: form, preventDefault: vitest.fn() };
+		vitest.spyOn(swup, 'navigate').mockImplementation(() => {});
+		plugin.submitForm(event);
+
+		expect(event.preventDefault).toHaveBeenCalled();
+	});
+
+	it('calls swup.navigate in submitForm', async () => {
+		swup.use(plugin);
+
+		const navigateSpy = vitest.spyOn(swup, 'navigate').mockImplementation(() => {});
+
+		const form = createForm('<form action="/path" data-swup-form><input type="hidden" name="a" value="b"></form>');
+		const originalEvent = new SubmitEvent('submit', { cancelable: true });
+		const event: DelegateEvent<SubmitEvent, HTMLFormElement> = { ...originalEvent, delegateTarget: form, preventDefault: vitest.fn() };
+		plugin.submitForm(event);
+
+		expect(navigateSpy).toHaveBeenCalledWith(
+			'http://localhost:3000/path?a=b',
+			expect.objectContaining({
+				method: 'GET',
+				cache: { read: false, write: true }
+			}),
+			expect.objectContaining({ el: form, event })
+		);
+	});
+
+	it('calls swup.navigate in submitForm with post data', async () => {
+		swup.use(plugin);
+
+		const navigateSpy = vitest.spyOn(swup, 'navigate').mockImplementation(() => {});
+
+		const form = createForm('<form action="/path" method="post" data-swup-form><input type="hidden" name="a" value="b"></form>');
+		const originalEvent = new SubmitEvent('submit', { cancelable: true });
+		const event: DelegateEvent<SubmitEvent, HTMLFormElement> = { ...originalEvent, delegateTarget: form, preventDefault: vitest.fn() };
+		plugin.submitForm(event);
+
+		expect(navigateSpy).toHaveBeenCalledWith(
+			'http://localhost:3000/path',
+			expect.objectContaining({
+				method: 'POST',
+				body: expect.any(URLSearchParams),
+				cache: { read: false, write: true }
+			}),
+			expect.objectContaining({ el: form, event })
+		);
 	});
 
 	it('sets up inline forms in visit:start hook', async () => {
