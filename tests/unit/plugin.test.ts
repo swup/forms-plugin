@@ -153,6 +153,27 @@ describe('SwupFormsPlugin', () => {
 		expect(formHookNewTabSpy).toHaveBeenCalledWith(expectedVisit, expectedArgs, undefined);
 	});
 
+	it('ignores forms targeted by swup.ignoreVisit', async () => {
+		swup.use(plugin);
+
+		const ignoreSpy = vitest.spyOn(swup, 'shouldIgnoreVisit').mockImplementation(() => true);
+
+		const formHookSpy = vitest.fn();
+		const formHookNewTabSpy = vitest.fn();
+		swup.hooks.on('form:submit', formHookSpy);
+		swup.hooks.on('form:submit:newtab', formHookNewTabSpy);
+
+		const form = createForm('<form action="/path" data-swup-form><input type="hidden" name="a" value="b"></form>');
+		submitForm(form);
+
+		expect(formHookSpy).not.toHaveBeenCalled();
+		expect(formHookNewTabSpy).not.toHaveBeenCalled();
+		expect(ignoreSpy).toHaveBeenCalledWith(
+			'http://localhost:3000/path?a=b',
+			expect.objectContaining({ el: form })
+		);
+	});
+
 	it('calls submitForm when submitting', async () => {
 		swup.use(plugin);
 
