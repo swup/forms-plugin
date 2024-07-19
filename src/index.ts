@@ -1,6 +1,7 @@
 import Plugin from '@swup/plugin';
-import { Location, getCurrentUrl } from 'swup';
 import type { DelegateEvent, DelegateEventUnsubscribe, Handler } from 'swup';
+import { forceFormToOpenInNewTab, getFormInfo } from './forms.js';
+import { trackKeys } from './keys.js';
 
 declare module 'swup' {
 	export interface HookDefinitions {
@@ -17,15 +18,6 @@ type Options = {
 	stripEmptyParams: boolean;
 };
 
-type FormInfo = {
-	url: string;
-	hash: string;
-	method: 'GET' | 'POST';
-	data: FormData;
-	body: URLSearchParams | FormData;
-	encoding: string;
-};
-
 export default class SwupFormsPlugin extends Plugin {
 	name = 'SwupFormsPlugin';
 
@@ -36,50 +28,44 @@ export default class SwupFormsPlugin extends Plugin {
 		inlineFormSelector: 'form[data-swup-inline-form]',
 		stripEmptyParams: false
 	};
+
 	options: Options;
 
 	// Track pressed keys to detect form submissions to a new tab
-	specialKeys: { [key: string]: boolean } = {
-		Meta: false,
-		Control: false,
-		Shift: false
-	};
+	specialKeys: ReturnType<typeof trackKeys>;
 
 	formSubmitDelegate?: DelegateEventUnsubscribe;
 
 	constructor(options: Partial<Options> = {}) {
 		super();
 		this.options = { ...this.defaults, ...options };
+		this.specialKeys = trackKeys(['Meta', 'Control', 'Shift']);
+		this.beforeFormSubmit = this.beforeFormSubmit.bind(this);
 	}
 
 	mount() {
 		this.swup.hooks.create('form:submit');
 		this.swup.hooks.create('form:submit:newtab');
 
+		this.specialKeys.watch();
+
 		// Register the submit handler. Using `capture:true` to be
 		// able to set the form's target attribute on the fly.
 		this.formSubmitDelegate = this.swup.delegateEvent(
 			this.options.formSelector,
 			'submit',
-			this.beforeFormSubmit.bind(this),
+			this.beforeFormSubmit,
 			{
 				capture: true
 			}
 		);
 
-		this.on('visit:start', this.handleInlineForms, { priority: 1 });
-
-		document.addEventListener('keydown', this.onKeyDown);
-		document.addEventListener('keyup', this.onKeyUp);
-		window.addEventListener('blur', this.onBlur);
+		this.on('visit:start', this.prepareInlineForms, { priority: 1 });
 	}
 
 	unmount() {
 		this.formSubmitDelegate?.destroy();
-
-		document.removeEventListener('keydown', this.onKeyDown);
-		document.removeEventListener('keyup', this.onKeyUp);
-		window.removeEventListener('blur', this.onBlur);
+		this.specialKeys.unwatch();
 	}
 
 	/**
@@ -88,22 +74,21 @@ export default class SwupFormsPlugin extends Plugin {
 	beforeFormSubmit(event: DelegatedSubmitEvent): void {
 		const swup = this.swup;
 		const { delegateTarget: form, submitter } = event;
-		const action = this.getFormAttr('action', form, submitter) || getCurrentUrl();
-		const opensInNewTabFromKeyPress = this.isSpecialKeyPressed();
-		const opensInNewTabFromTargetAttr =
-			this.getFormAttr('target', form, submitter) === '_blank';
+
+		const { href, url, hash, target } = getFormInfo(form, submitter);
+		const opensInNewTabFromKeyPress = this.specialKeys.pressed;
+		const opensInNewTabFromTargetAttr = target === '_blank';
 		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
 
 		// Create temporary visit object for form:submit:* hooks
-		const { url: to, hash } = Location.fromUrl(action);
 		// @ts-expect-error: createVisit is currently private, need to make this semi-public somehow
-		const visit = swup.createVisit({ to, hash, el: form, event });
+		const visit = swup.createVisit({ to: url, hash, el: form, event });
 
 		/**
 		 * Allow ignoring this form submission via callback
 		 * No use in checking if it will open in a new tab anyway
 		 */
-		if (!opensInNewTab && swup.shouldIgnoreVisit(action, { el: form, event })) {
+		if (!opensInNewTab && swup.shouldIgnoreVisit(href, { el: form, event })) {
 			return;
 		}
 
@@ -121,15 +106,8 @@ export default class SwupFormsPlugin extends Plugin {
 		 */
 		if (opensInNewTabFromKeyPress) {
 			swup.hooks.callSync('form:submit:newtab', visit, { el: form, event });
-
-			form.dataset.swupOriginalFormTarget = form.getAttribute('target') || '';
-			form.setAttribute('target', '_blank');
-			form.addEventListener(
-				'submit',
-				() => requestAnimationFrame(() => this.restorePreviousFormTarget(form)),
-				{ once: true }
-			);
-
+			const restorePreviousTarget = forceFormToOpenInNewTab(form);
+			form.addEventListener('submit', () => setTimeout(restorePreviousTarget), { once: true });
 			return;
 		}
 
@@ -142,149 +120,28 @@ export default class SwupFormsPlugin extends Plugin {
 	}
 
 	/**
-	 * Restores the previous form target if available
-	 */
-	restorePreviousFormTarget(form: HTMLFormElement): void {
-		if (form.dataset.swupOriginalFormTarget) {
-			form.setAttribute('target', form.dataset.swupOriginalFormTarget);
-		} else {
-			form.removeAttribute('target');
-		}
-	}
-
-	/**
 	 * Submits a form through swup
 	 */
 	submitForm(event: DelegatedSubmitEvent): void {
-		const el = event.delegateTarget;
-		const { url, hash, method, data, body } = this.getFormInfo(el, event);
-		let action = url;
-		let params: { method: 'GET' | 'POST'; body?: FormData | URLSearchParams } = { method };
+		const { delegateTarget: form, submitter } = event;
+		const { stripEmptyParams } = this.options;
+		const { href, method, body } = getFormInfo(form, submitter, { stripEmptyParams });
+		const cache = { read: false, write: true };
 
-		switch (method) {
-			case 'POST':
-				params = { method, body };
-				break;
-			case 'GET':
-				this.maybeStripEmptyParams(data);
-				action = this.appendQueryParams(action, data);
-				break;
-			default:
-				console.warn(`Unsupported form method: ${method}`);
-				return;
+		if (!['GET', 'POST'].includes(method)) {
+			console.warn(`Unsupported form method: ${method}`);
+			return;
 		}
 
 		event.preventDefault();
 
-		const cache = {
-			read: false,
-			write: true
-		};
-		this.swup.navigate(action + hash, { ...params, cache }, { el, event });
+		this.swup.navigate(href, { method, body, cache }, { el: form, event });
 	}
-
-	/**
-	 * Get information about where and how a form will submit
-	 */
-	getFormInfo(form: HTMLFormElement, { submitter }: SubmitEvent): FormInfo {
-		const method = (this.getFormAttr('method', form, submitter) || 'get').toUpperCase() as
-			| 'GET'
-			| 'POST';
-		const action = this.getFormAttr('action', form, submitter) || getCurrentUrl();
-		const { url, hash } = Location.fromUrl(action);
-		const encoding = (
-			this.getFormAttr('enctype', form, submitter) || 'application/x-www-form-urlencoded'
-		).toLowerCase();
-		const multipart = encoding === 'multipart/form-data';
-
-		const data = new FormData(form);
-		let body: FormData | URLSearchParams;
-		if (multipart) {
-			body = data;
-		} else {
-			body = new URLSearchParams(data as unknown as Record<string, string>);
-		}
-
-		return { url, hash, method, data, body, encoding };
-	}
-
-	/**
-	 * Get a form attribute either from the form, or the submitter element if present
-	 */
-	getFormAttr(
-		attr: string,
-		form: HTMLFormElement,
-		submitter: HTMLElement | null = null
-	): string | null {
-		return submitter?.getAttribute(`form${attr}`) ?? form.getAttribute(attr);
-	}
-
-	/**
-	 * Appends query parameters to a URL
-	 */
-	appendQueryParams(url: string, data: FormData): string {
-		const path = url.split('?')[0];
-		const query = new URLSearchParams(data as unknown as Record<string, string>).toString();
-		return query ? `${path}?${query}` : path;
-	}
-
-	/**
-	 * Strip empty params from the FormData (by reference)
-	 * @see https://stackoverflow.com/a/64029534/586823
-	 */
-	maybeStripEmptyParams(data: FormData): void {
-		if (!this.options.stripEmptyParams) return;
-
-		for (const [name, value] of Array.from(data.entries())) {
-			if (value === '') data.delete(name);
-		}
-	}
-
-	/**
-	 * Is either command or control key down at the moment
-	 */
-	isSpecialKeyPressed(): boolean {
-		return Object.values(this.specialKeys).some((value) => value);
-	}
-
-	/**
-	 * Reset all entries in `specialKeys` to false
-	 */
-	resetSpecialKeys() {
-		for (const key of Object.keys(this.specialKeys)) {
-			this.specialKeys[key] = false;
-		}
-	}
-
-	/**
-	 * Run every time the window looses focus
-	 */
-	onBlur = () => {
-		this.resetSpecialKeys();
-	};
-
-	/**
-	 * Adjust `specialKeys` on keyDown
-	 */
-	onKeyDown = (event: KeyboardEvent): void => {
-		if (this.specialKeys.hasOwnProperty(event.key)) {
-			this.specialKeys[event.key] = true;
-		}
-	};
-
-	/**
-	 * Adjust `specialKeys` on keyUp
-	 */
-	onKeyUp = (event: KeyboardEvent): void => {
-		if (this.specialKeys.hasOwnProperty(event.key)) {
-			this.specialKeys[event.key] = false;
-		}
-	};
 
 	/**
 	 * Handles visits triggered by forms matching [data-swup-inline-form]
 	 */
-	handleInlineForms: Handler<'visit:start'> = (visit) => {
+	prepareInlineForms: Handler<'visit:start'> = (visit) => {
 		const { el } = visit.trigger;
 		if (!el?.matches(this.options.inlineFormSelector)) return;
 
