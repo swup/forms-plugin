@@ -247,4 +247,32 @@ describe('SwupFormsPlugin', () => {
 		expect(spy).toHaveBeenCalledOnce();
 		expect(spy).toHaveBeenCalledWith(visit, undefined, undefined);
 	});
+
+	it('sets up inline forms by manipulating the visit object', async () => {
+		swup.use(plugin);
+
+		const form = createForm('<form id="form" data-swup-inline-form></form>');
+		visit.trigger.el = form;
+
+		plugin.prepareInlineForms(visit, undefined);
+
+		expect(visit.containers).toEqual(['#form']);
+		expect(visit.animation.scope).toBe('containers');
+		expect(visit.animation.selector).toBe('#form');
+		expect(visit.scroll.target).toBe('#form');
+	});
+
+	it('does not set up forms not marked as inline', async () => {
+		swup.use(plugin);
+
+		const form = createForm('<form data-swup-form></form>');
+		visit.trigger.el = form;
+
+		plugin.prepareInlineForms(visit, undefined);
+
+		expect(visit.containers).toEqual(['#swup']);
+		expect(visit.animation.scope).not.toBe('containers');
+		expect(visit.animation.selector).not.toBe('#form');
+		expect(visit.scroll.target).not.toBe('#form');
+	});
 });
