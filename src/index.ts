@@ -40,6 +40,7 @@ export default class SwupFormsPlugin extends Plugin {
 		super();
 		this.options = { ...this.defaults, ...options };
 		this.specialKeys = trackKeys(['Meta', 'Control', 'Shift']);
+		this.beforeFormSubmit = this.beforeFormSubmit.bind(this);
 	}
 
 	mount() {
@@ -53,7 +54,7 @@ export default class SwupFormsPlugin extends Plugin {
 		this.formSubmitDelegate = this.swup.delegateEvent(
 			this.options.formSelector,
 			'submit',
-			this.beforeFormSubmit.bind(this),
+			this.beforeFormSubmit,
 			{
 				capture: true
 			}
