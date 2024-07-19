@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vitest } from 'vitest';
-import { appendQueryParams, forceFormToOpenInNewTab, getFormAttr, getFormInfo, stripEmptyFormParams } from '../../src/forms.js';
+import {
+	appendQueryParams,
+	forceFormToOpenInNewTab,
+	getFormAttr,
+	getFormInfo,
+	stripEmptyFormParams
+} from '../../src/forms.js';
 
 const createForm = (html: string) => {
 	return new window.DOMParser().parseFromString(html, 'text/html').querySelector('form')!;
@@ -64,7 +70,7 @@ describe('stripEmptyFormParams', () => {
 
 describe('forceFormToOpenInNewTab', () => {
 	beforeEach(() => {
-		vitest.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => setTimeout(cb, 0));
+		vitest.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => setTimeout(cb, 0));
 	});
 
 	afterEach(() => {
@@ -179,7 +185,7 @@ describe('getFormInfo', () => {
 			hash: '#anchor',
 			target: 'frame',
 			method: 'GET',
-			encoding: 'application/x-www-form-urlencoded',
+			encoding: 'application/x-www-form-urlencoded'
 		});
 	});
 
@@ -191,7 +197,7 @@ describe('getFormInfo', () => {
 			hash: '#anchor',
 			method: 'GET',
 			body: undefined,
-			encoding: 'application/x-www-form-urlencoded',
+			encoding: 'application/x-www-form-urlencoded'
 		});
 	});
 
@@ -203,7 +209,7 @@ describe('getFormInfo', () => {
 			hash: '#anchor',
 			method: 'POST',
 			body: new URLSearchParams({ b: 'c' }),
-			encoding: 'application/x-www-form-urlencoded',
+			encoding: 'application/x-www-form-urlencoded'
 		});
 	});
 
@@ -215,7 +221,7 @@ describe('getFormInfo', () => {
 			hash: '#anchor',
 			method: 'POST',
 			body: new FormData(form),
-			encoding: 'multipart/form-data',
+			encoding: 'multipart/form-data'
 		});
 	});
 });

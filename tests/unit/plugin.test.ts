@@ -23,7 +23,7 @@ const submitForm = (form: HTMLFormElement, submitter?: HTMLButtonElement | null,
 	if (key) {
 		document.dispatchEvent(new KeyboardEvent('keyup', { key }));
 	}
-}
+};
 
 describe('SwupFormsPlugin', () => {
 	let swup: Swup;
@@ -98,7 +98,7 @@ describe('SwupFormsPlugin', () => {
 			trigger: expect.objectContaining({ el: form, event: expectedEvent })
 		});
 
-		const expectedArgs = expect.objectContaining({  el: form, event: expectedEvent });
+		const expectedArgs = expect.objectContaining({ el: form, event: expectedEvent });
 
 		expect(formHookSpy).toHaveBeenCalledWith(expectedVisit, expectedArgs, undefined);
 	});
@@ -122,7 +122,7 @@ describe('SwupFormsPlugin', () => {
 			trigger: expect.objectContaining({ el: form, event: expectedEvent })
 		});
 
-		const expectedArgs = expect.objectContaining({  el: form, event: expectedEvent });
+		const expectedArgs = expect.objectContaining({ el: form, event: expectedEvent });
 
 		expect(formHookSpy).not.toHaveBeenCalled();
 		expect(formHookNewTabSpy).toHaveBeenCalledWith(expectedVisit, expectedArgs, undefined);
@@ -147,7 +147,7 @@ describe('SwupFormsPlugin', () => {
 			trigger: expect.objectContaining({ el: form, event: expectedEvent })
 		});
 
-		const expectedArgs = expect.objectContaining({  el: form, event: expectedEvent });
+		const expectedArgs = expect.objectContaining({ el: form, event: expectedEvent });
 
 		expect(formHookSpy).not.toHaveBeenCalled();
 		expect(formHookNewTabSpy).toHaveBeenCalledWith(expectedVisit, expectedArgs, undefined);
