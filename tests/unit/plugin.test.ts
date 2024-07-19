@@ -11,11 +11,17 @@ const createForm = (html: string) => {
 	return form;
 };
 
-const submitForm = (form: HTMLFormElement, submitter?: HTMLButtonElement | null) => {
+const submitForm = (form: HTMLFormElement, submitter?: HTMLButtonElement | null, key?: string) => {
+	if (key) {
+		document.dispatchEvent(new KeyboardEvent('keydown', { key }));
+	}
 	if (submitter) {
 		submitter.click();
 	} else {
 		form.dispatchEvent(new SubmitEvent('submit', { bubbles: true }));
+	}
+	if (key) {
+		document.dispatchEvent(new KeyboardEvent('keyup', { key }));
 	}
 }
 
@@ -73,12 +79,12 @@ describe('SwupFormsPlugin', () => {
 		expect(spy).toHaveBeenCalledWith(expect.objectContaining({ submitter }));
 	});
 
-	it('calls the form:submit hook before submitting', async () => {
+	it('calls the form:submit hook', async () => {
 		swup.use(plugin);
 
 		vitest.spyOn(plugin, 'submitForm').mockImplementation(() => {});
-		const formHookSpy = vitest.fn();
 
+		const formHookSpy = vitest.fn();
 		swup.hooks.on('form:submit', formHookSpy);
 
 		const form = createForm('<form action="/path" data-swup-form></form>');
@@ -95,6 +101,56 @@ describe('SwupFormsPlugin', () => {
 		const expectedArgs = expect.objectContaining({  el: form, event: expectedEvent });
 
 		expect(formHookSpy).toHaveBeenCalledWith(expectedVisit, expectedArgs, undefined);
+	});
+
+	it('calls the form:submit:newtab hook for new-tab forms', async () => {
+		swup.use(plugin);
+
+		const formHookSpy = vitest.fn();
+		const formHookNewTabSpy = vitest.fn();
+		swup.hooks.on('form:submit', formHookSpy);
+		swup.hooks.on('form:submit:newtab', formHookNewTabSpy);
+
+		const form = createForm('<form action="/path" target="_blank" data-swup-form></form>');
+		submitForm(form);
+
+		const expectedEvent = expect.objectContaining({ delegateTarget: form });
+
+		const expectedVisit = expect.objectContaining({
+			from: expect.objectContaining({ url: '/' }),
+			to: expect.objectContaining({ url: '/path' }),
+			trigger: expect.objectContaining({ el: form, event: expectedEvent })
+		});
+
+		const expectedArgs = expect.objectContaining({  el: form, event: expectedEvent });
+
+		expect(formHookSpy).not.toHaveBeenCalled();
+		expect(formHookNewTabSpy).toHaveBeenCalledWith(expectedVisit, expectedArgs, undefined);
+	});
+
+	it('calls the form:submit:newtab hook when meta key is pressed', async () => {
+		swup.use(plugin);
+
+		const formHookSpy = vitest.fn();
+		const formHookNewTabSpy = vitest.fn();
+		swup.hooks.on('form:submit', formHookSpy);
+		swup.hooks.on('form:submit:newtab', formHookNewTabSpy);
+
+		const form = createForm('<form action="/path" data-swup-form></form>');
+		submitForm(form, null, 'Control');
+
+		const expectedEvent = expect.objectContaining({ delegateTarget: form });
+
+		const expectedVisit = expect.objectContaining({
+			from: expect.objectContaining({ url: '/' }),
+			to: expect.objectContaining({ url: '/path' }),
+			trigger: expect.objectContaining({ el: form, event: expectedEvent })
+		});
+
+		const expectedArgs = expect.objectContaining({  el: form, event: expectedEvent });
+
+		expect(formHookSpy).not.toHaveBeenCalled();
+		expect(formHookNewTabSpy).toHaveBeenCalledWith(expectedVisit, expectedArgs, undefined);
 	});
 
 	it('calls submitForm when submitting', async () => {
