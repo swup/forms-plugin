@@ -1,5 +1,10 @@
 # Changelog
 
+## [3.6.0] - 2024-07-19
+
+- Improve handling of forms targeting urls with `#hash`
+- Add test coverage
+
 ## [3.5.1] - 2024-03-25
 
 - Fix bug where forms sometimes unexpectedly opened in a new tab
