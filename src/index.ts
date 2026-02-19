@@ -34,13 +34,15 @@ export default class SwupFormsPlugin extends Plugin {
 	// Track pressed keys to detect form submissions to a new tab
 	specialKeys: ReturnType<typeof trackKeys>;
 
-	formSubmitDelegate?: DelegateEventUnsubscribe;
+	formSubmitCaptureDelegate?: DelegateEventUnsubscribe;
+	formSubmitBubbleDelegate?: DelegateEventUnsubscribe;
 
 	constructor(options: Partial<Options> = {}) {
 		super();
 		this.options = { ...this.defaults, ...options };
 		this.specialKeys = trackKeys(['Meta', 'Control', 'Shift']);
 		this.beforeFormSubmit = this.beforeFormSubmit.bind(this);
+		this.onFormSubmit = this.onFormSubmit.bind(this);
 	}
 
 	mount() {
@@ -49,9 +51,9 @@ export default class SwupFormsPlugin extends Plugin {
 
 		this.specialKeys.watch();
 
-		// Register the submit handler. Using `capture:true` to be
-		// able to set the form's target attribute on the fly.
-		this.formSubmitDelegate = this.swup.delegateEvent(
+		// Register the submit handlers. Split into two phases
+		// 1) capture phase: normalize opening of form in new tab across browsers
+		this.formSubmitCaptureDelegate = this.swup.delegateEvent(
 			this.options.formSelector,
 			'submit',
 			this.beforeFormSubmit,
@@ -59,17 +61,25 @@ export default class SwupFormsPlugin extends Plugin {
 				capture: true
 			}
 		);
+		// 2) bubble phase: perform actual submission
+		this.formSubmitBubbleDelegate = this.swup.delegateEvent(
+			this.options.formSelector,
+			'submit',
+			this.onFormSubmit
+		);
 
 		this.on('visit:start', this.prepareInlineForms, { priority: 1 });
 	}
 
 	unmount() {
-		this.formSubmitDelegate?.destroy();
+		this.formSubmitCaptureDelegate?.destroy();
+		this.formSubmitBubbleDelegate?.destroy();
 		this.specialKeys.unwatch();
 	}
 
 	/**
-	 * Handles form 'submit' events during the capture phase
+	 * Handle form 'submit' events during the capture phase
+	 * This is used to normalize the behavior of opening forms in a new tab
 	 */
 	beforeFormSubmit(event: DelegatedSubmitEvent): void {
 		const swup = this.swup;
@@ -80,7 +90,7 @@ export default class SwupFormsPlugin extends Plugin {
 		const opensInNewTabFromTargetAttr = target === '_blank';
 		const opensInNewTab = opensInNewTabFromKeyPress || opensInNewTabFromTargetAttr;
 
-		// Create temporary visit object for form:submit:* hooks
+		// Create temporary visit object for form:submit:newtab hooks
 		// @ts-expect-error: createVisit is currently private, need to make this semi-public somehow
 		const visit = swup.createVisit({ to: url, hash, el: form, event });
 
@@ -110,9 +120,27 @@ export default class SwupFormsPlugin extends Plugin {
 			form.addEventListener('submit', () => setTimeout(restorePreviousTarget), { once: true });
 			return;
 		}
+	}
+
+	/**
+	 * Handles form 'submit' events during the bubble phase
+	 * This is used to handle the actual form submission
+	 */
+	onFormSubmit(event: DelegatedSubmitEvent): void {
+		// Allow consumer code to prevent form submissions
+		if (event.defaultPrevented) return;
+
+		const swup = this.swup;
+		const { delegateTarget: form, submitter } = event;
+
+		const { url, hash } = getFormInfo(form, submitter);
+
+		// Create temporary visit object for form:submit hook
+		// @ts-expect-error: createVisit is currently private, need to make this semi-public somehow
+		const visit = swup.createVisit({ to: url, hash, el: form, event });
 
 		/**
-		 * Trigger the form:submit hook.
+		 * Trigger the actual form submission.
 		 */
 		swup.hooks.callSync('form:submit', visit, { el: form, event }, () => {
 			this.submitForm(event);
