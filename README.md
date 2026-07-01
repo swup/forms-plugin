@@ -58,7 +58,7 @@ and `formtarget` attributes override the form's corresponding attributes, matchi
 <form id="search" action="/search" data-swup-form></form>
 
 <!-- External input associated with the form above -->
-<input name="q" form="search">
+<input name="q" form="search" />
 
 <!-- External submitter associated with the form above, overriding the form action -->
 <button type="submit" form="search" formaction="/search/advanced">Search</button>
