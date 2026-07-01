@@ -104,6 +104,10 @@ If you give a form an additional attribute `[data-swup-inline-form]`, swup will:
 }
 ```
 
+> **Note** Inline forms only replace the form's own container. Controls associated with an
+> inline form via the `form` attribute but placed outside of it are **not**
+> re-rendered on submit.
+
 ## Options
 
 ### `formSelector`
