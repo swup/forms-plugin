@@ -11,6 +11,14 @@ const createForm = (html: string) => {
 	return form;
 };
 
+const appendToBody = <T extends Element = HTMLElement>(html: string) => {
+	const wrapper = document.createElement('div');
+	wrapper.innerHTML = html;
+	const el = wrapper.firstElementChild as T;
+	document.body.appendChild(el);
+	return el;
+};
+
 const submitForm = (form: HTMLFormElement, submitter?: HTMLButtonElement | null, key?: string) => {
 	if (key) {
 		document.dispatchEvent(new KeyboardEvent('keydown', { key }));
@@ -45,6 +53,7 @@ describe('SwupFormsPlugin', () => {
 	afterEach(() => {
 		swup.unuse(plugin);
 		swup.destroy();
+		document.body.innerHTML = '';
 	});
 
 	it('does not call beforeFormSubmit for ignored forms', async () => {
@@ -77,6 +86,52 @@ describe('SwupFormsPlugin', () => {
 		expect(spy).toHaveBeenCalledWith(expect.not.objectContaining({ submitter }));
 		submitForm(form, submitter);
 		expect(spy).toHaveBeenCalledWith(expect.objectContaining({ submitter }));
+	});
+
+	it('calls beforeFormSubmit for an externally associated submit button', async () => {
+		const spy = vitest.spyOn(plugin, 'beforeFormSubmit').mockImplementation(() => {});
+		swup.use(plugin);
+
+		const form = createForm('<form id="ext-form" action="/path" data-swup-form></form>');
+		const submitter = appendToBody<HTMLButtonElement>('<button type="submit" form="ext-form"></button>');
+		submitForm(form, submitter);
+
+		expect(spy).toHaveBeenCalledWith(expect.objectContaining({ delegateTarget: form, submitter }));
+	});
+
+	it('navigates to the formaction of an externally associated submitter', async () => {
+		swup.use(plugin);
+
+		const navigateSpy = vitest.spyOn(swup, 'navigate').mockImplementation(() => {});
+
+		const form = createForm('<form id="ext-form" action="/path" data-swup-form></form>');
+		const submitter = appendToBody<HTMLButtonElement>(
+			'<button type="submit" form="ext-form" formaction="/other"></button>'
+		);
+		submitForm(form, submitter);
+
+		expect(navigateSpy).toHaveBeenCalledWith(
+			'http://localhost:3000/other',
+			expect.objectContaining({ method: 'GET', cache: { read: false, write: true } }),
+			expect.objectContaining({ el: form })
+		);
+	});
+
+	it('includes externally associated inputs when navigating', async () => {
+		swup.use(plugin);
+
+		const navigateSpy = vitest.spyOn(swup, 'navigate').mockImplementation(() => {});
+
+		const form = createForm('<form id="ext-form" action="/path" data-swup-form></form>');
+		appendToBody('<input type="hidden" name="a" value="b" form="ext-form">');
+		const submitter = appendToBody<HTMLButtonElement>('<button type="submit" form="ext-form"></button>');
+		submitForm(form, submitter);
+
+		expect(navigateSpy).toHaveBeenCalledWith(
+			'http://localhost:3000/path?a=b',
+			expect.objectContaining({ method: 'GET' }),
+			expect.objectContaining({ el: form })
+		);
 	});
 
 	it('calls the form:submit hook', async () => {

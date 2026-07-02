@@ -40,9 +40,29 @@ const swup = new Swup({
 
 ## Server response
 
+The server response must be a valid page with all containers to be replaced by swup.
+
+## Form attributes
+
 Action, method and encoding type attributes set on the form are respected.
 
-The server response must be a valid page with all containers to be replaced by swup.
+[Externally associated inputs](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input#form) are
+supported. Inputs and submit buttons that live outside the form but reference it via `form="form-id"` are
+included in the submission.
+
+Submitter overrides are supported. If the submitter is a button, its `formaction`, `formmethod`, `formenctype`
+and `formtarget` attributes override the form's corresponding attributes, matching native browser behavior.
+
+```html
+<!-- The form itself, handled by swup -->
+<form id="search" action="/search" data-swup-form></form>
+
+<!-- External input associated with the form above -->
+<input name="q" form="search" />
+
+<!-- External submitter associated with the form above, overriding the form action -->
+<button type="submit" form="search" formaction="/search/advanced">Search</button>
+```
 
 ## Custom animations
 
@@ -83,6 +103,10 @@ If you give a form an additional attribute `[data-swup-inline-form]`, swup will:
   opacity: 0;
 }
 ```
+
+> **Note** Inline forms only replace the form's own container. Controls associated with an
+> inline form via the `form` attribute but placed outside of it are **not**
+> re-rendered on submit.
 
 ## Options
 

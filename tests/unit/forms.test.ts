@@ -15,6 +15,8 @@ const createButton = (html: string) => {
 	return new window.DOMParser().parseFromString(html, 'text/html').querySelector('button')!;
 };
 
+const parseDoc = (html: string) => new window.DOMParser().parseFromString(html, 'text/html');
+
 describe('appendQueryParams', () => {
 	const empty = new FormData();
 	const data = new FormData();
@@ -222,6 +224,63 @@ describe('getFormInfo', () => {
 			method: 'POST',
 			body: new FormData(form),
 			encoding: 'multipart/form-data'
+		});
+	});
+});
+
+describe('getFormInfo with the form attribute', () => {
+	it('includes inputs associated via the form attribute in GET params', () => {
+		const doc = parseDoc(
+			'<form id="f" action="/path#anchor"></form>' +
+				'<input type="hidden" name="a" value="b" form="f">'
+		);
+		const form = doc.querySelector('form')!;
+		expect(getFormInfo(form)).toMatchObject({
+			href: 'http://localhost:3000/path?a=b#anchor',
+			url: '/path?a=b',
+			hash: '#anchor',
+			method: 'GET'
+		});
+	});
+
+	it('includes inputs associated via the form attribute in POST body', () => {
+		const doc = parseDoc(
+			'<form id="f" action="/path" method="post"></form>' +
+				'<input type="hidden" name="a" value="b" form="f">'
+		);
+		const form = doc.querySelector('form')!;
+		expect(getFormInfo(form)).toMatchObject({
+			url: '/path',
+			method: 'POST',
+			body: new URLSearchParams({ a: 'b' })
+		});
+	});
+
+	it('includes the value of an externally associated submitter', () => {
+		const doc = parseDoc(
+			'<form id="f" action="/path" method="post"></form>' +
+				'<button type="submit" form="f" name="btn" value="go">go</button>'
+		);
+		const form = doc.querySelector('form')!;
+		const submitter = doc.querySelector('button');
+		expect(getFormInfo(form, submitter)).toMatchObject({
+			url: '/path',
+			method: 'POST',
+			body: new URLSearchParams({ btn: 'go' })
+		});
+	});
+
+	it('reads formaction/formmethod from an externally associated submitter', () => {
+		const doc = parseDoc(
+			'<form id="f" action="/path"></form>' +
+				'<button type="submit" form="f" formaction="/other" formmethod="post">go</button>'
+		);
+		const form = doc.querySelector('form')!;
+		const submitter = doc.querySelector('button');
+		expect(getFormInfo(form, submitter)).toMatchObject({
+			action: 'http://localhost:3000/other',
+			url: '/other',
+			method: 'POST'
 		});
 	});
 });
